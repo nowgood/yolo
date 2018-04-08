@@ -9,29 +9,34 @@ import sys
 from utils import flowers
 from preprocess.get_minibatch_input import load_batch
 from preprocess import download_and_convert_flowers
-
+from utils import download_dataset
 sys.path.append('./')
 cwd = os.getcwd()
 print(cwd)
 
 IMAGE_SIZE = 224
-CHECKPOINTS_DIR = "../model/pretrain/"
-TRAIN_DIR = '../model/train/flower/'
+NUMBER_OF_STEPS = 10000
+BATCH_SIZE = 128
+
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
-FLOWERS_DATA_DIR = '../datasets/flower/'
+cwd = os.getcwd()
+FLOWERS_DATA_DIR = os.path.join(cwd, '../datasets/flower_photos')
+TRAIN_DIR = os.path.join(cwd, '../model/train/flower_photos/')
+CHECKPOINTS_DIR = os.path.join(cwd, "../model/pretrain/")
 CHECKPOINT_EXCLUDE_SCOPES = ["resnet_v2_50/logits"]
 
 
 def main(_):
 
-    # download and conver flower dataset to tfrecord
+    # download and conver flower_photos dataset to tfrecord
+    download_dataset.maybe_download_and_extract(FLOWERS_DATA_DIR, _DATA_URL)
     download_and_convert_flowers.run(FLOWERS_DATA_DIR)
     
     with tf.Graph().as_default():
 
         dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
-        images, _, labels = load_batch(dataset, is_training=True)
-        net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes)
+        images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE, is_training=True)
+        net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes, checkpoint_dir=TRAIN_DIR)
 
         logits = net.logits_fn(images)
         print(logits.shape)
@@ -48,8 +53,10 @@ def main(_):
         final_loss = slim.learning.train(
             train_op,
             logdir=TRAIN_DIR,
-            init_fn=net.get_init_fn(),
-            number_of_steps=1)
+            init_fn=net.get_init_fn(False),
+            number_of_steps=NUMBER_OF_STEPS,
+            trace_every_n_steps=50,
+            log_every_n_steps=50)
 
         print('Finished training. Last batch loss %f' % final_loss)
 
