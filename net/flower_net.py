@@ -5,22 +5,22 @@ import urllib.request as urllib
 from tensorflow.contrib import slim
 from tensorflow.contrib.slim.nets import resnet_v2
 from utils import imagenet
-from preprocess import  inception_preprocessing
+from utils import dataset_utils
+from preprocess import inception_preprocessing
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
 from utils import download_dataset
 
-sys.path.append('./')
+cwd = sys.path.append('./')
 
-
-image_size = 224
+IMAGE_SIZE = 224
 checkpoints_dir = "../model/pretrain/"
 
-_CKPT_URL = "http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz"
+_DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 
-download_dataset.maybe_download_and_extract(checkpoints_dir, _CKPT_URL)
+download_dataset.maybe_download_and_extract("../datasets/", _DATA_URL)
 
 
 def main(_):
@@ -60,5 +60,5 @@ def main(_):
             print('Probability %0.6f%% => [%s]' % (probabilities[index] * 100, names[index + 1]))
 
 
-if __name__ == "__main__":
-    tf.app.run()
+#if __name__ == "__main__":
+#    tf.app.run()
