@@ -1,64 +1,58 @@
 # -*-coding:utf-8-*-
 
 import tensorflow as tf
-import urllib.request as urllib
 from tensorflow.contrib import slim
-from tensorflow.contrib.slim.nets import resnet_v2
-from utils import imagenet
-from utils import dataset_utils
-from preprocess import inception_preprocessing
-import numpy as np
-import matplotlib.pyplot as plt
+
+from net.Resnetv2_50Variant import Resnetv2ToFlowerNet
 import os
 import sys
-from utils import download_dataset
+from utils import flowers
+from preprocess.get_minibatch_input import load_batch
+from preprocess import download_and_convert_flowers
 
-cwd = sys.path.append('./')
+sys.path.append('./')
+cwd = os.getcwd()
+print(cwd)
 
 IMAGE_SIZE = 224
-checkpoints_dir = "../model/pretrain/"
-
+CHECKPOINTS_DIR = "../model/pretrain/"
+TRAIN_DIR = '../model/train/flower/'
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
-
-download_dataset.maybe_download_and_extract("../datasets/", _DATA_URL)
+FLOWERS_DATA_DIR = '../datasets/flower/'
+CHECKPOINT_EXCLUDE_SCOPES = ["resnet_v2_50/logits"]
 
 
 def main(_):
+
+    # download and conver flower dataset to tfrecord
+    download_and_convert_flowers.run(FLOWERS_DATA_DIR)
+    
     with tf.Graph().as_default():
-        url = 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Tigershark3.jpg'
-        image_string = urllib.urlopen(url).read()
-        image = tf.image.decode_jpeg(image_string, channels=3)
-        processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
-        processed_images = tf.expand_dims(processed_image, 0)
 
-        # Create the model, use the default arg scope to configure the batch norm parameters.
-        with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-            logits, _ = resnet_v2.resnet_v2_50(processed_images, num_classes=1001, is_training=False)
-        probabilities = tf.nn.softmax(logits)
+        dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
+        images, _, labels = load_batch(dataset, is_training=True)
+        net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes)
 
-        init_fn = slim.assign_from_checkpoint_fn(
-            os.path.join(checkpoints_dir, 'resnet_v2_50.ckpt'),
-            slim.get_model_variables('resnet_v2_50'))
+        logits = net.logits_fn(images)
+        print(logits.shape)
+        one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
+        print(one_hot_labels.shape)
+        slim.losses.softmax_cross_entropy(logits, one_hot_labels)
+        total_loss = slim.losses.get_total_loss()
+        tf.summary.scalar('losses/Total Loss', total_loss)
 
-        with tf.Session() as sess:
-            init_fn(sess)
-            np_image, probabilities = sess.run([image, probabilities])
-            probabilities = np.reshape(probabilities, [1001])
-            print(probabilities.shape)
-            sorted_inds = [i[0] for i in sorted(enumerate(-probabilities), key=lambda x: x[1])]
-            print(sorted_inds)
-        plt.figure()
-        plt.imshow(np_image.astype(np.uint8))
-        plt.axis('off')
-        plt.show()
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+        train_op = slim.learning.create_train_op(total_loss, optimizer)
 
-        names = imagenet.create_readable_names_for_imagenet_labels()
+        # Run the training:
+        final_loss = slim.learning.train(
+            train_op,
+            logdir=TRAIN_DIR,
+            init_fn=net.get_init_fn(),
+            number_of_steps=1)
 
-        for i in range(5):
-            index = sorted_inds[i]
-            # Shift the index of a class name by one.
-            print('Probability %0.6f%% => [%s]' % (probabilities[index] * 100, names[index + 1]))
+        print('Finished training. Last batch loss %f' % final_loss)
 
 
-#if __name__ == "__main__":
-#    tf.app.run()
+if __name__ == "__main__":
+    tf.app.run()

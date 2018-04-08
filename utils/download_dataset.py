@@ -10,8 +10,9 @@ def maybe_download_and_extract(data_dir, dataset_url):
     dest_directory = data_dir
     if not os.path.exists(dest_directory):
         os.makedirs(dest_directory)
-        filename = dataset_url.split('/')[-1]
-        filepath = os.path.join(dest_directory, filename)
+
+    filename = dataset_url.split('/')[-1]
+    filepath = os.path.join(dest_directory, filename)
     if not os.path.exists(filepath):
         def _progress(count, block_size, total_size):
             sys.stdout.write('\r>> Downloading %s %.1f%%' % (filename,
