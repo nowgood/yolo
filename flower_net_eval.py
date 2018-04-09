@@ -31,6 +31,7 @@ def main(_):
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE)
         net = Resnetv2ToFlowerNet(num_classes=dataset.num_classes)
         logits = net.logits_fn(images)
+        prediction = tf.nn.softmax(logits)
         init_fn = net.get_init_fn(checkpoint_dir=TRAIN_DIR)
 
         config = tf.ConfigProto()
@@ -42,10 +43,10 @@ def main(_):
             summary_writer = tf.summary.FileWriter(EVAL_DIR, g)
             i = 1
             while i < 100:
-                sess.run(logits)
-                accuracy = tf.reduce_mean(tf.equal(tf.argmax(logits), labels))
+                pre = sess.run(prediction)
+                accuracy = tf.reduce_mean(tf.equal(tf.argmax(pre), labels))
 
-                print('%s: accuracy @ 1 = %.3f' % (datetime.now(), precision))
+                print('%s: accuracy @ 1 = %.3f' % (datetime.now(), accuracy))
                 tf.summary.scalar('accuracy', accuracy)
                 time.sleep(60)
                 i += 1
