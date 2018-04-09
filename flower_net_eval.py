@@ -43,7 +43,7 @@ def main(_):
                 sess.run(tf.initialize_local_variables())
                 init_fn(sess)
                 pre, np_images_raw, np_labels = sess.run([prediction, images_raw, labels])
-                accuracy = tf.cast(tf.reduce_mean(tf.equal(tf.argmax(pre, 1), labels)), tf.float32)
+                accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(pre, 1), labels)), tf.float32)
                 print('%s: accuracy @ 1 = %.3f' % (datetime.now(), accuracy))
 
 
