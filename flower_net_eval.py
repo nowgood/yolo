@@ -7,6 +7,7 @@ from utils import flowers
 from preprocess.get_minibatch_input import load_batch
 from datetime import datetime
 import time
+from tensorflow.contrib import slim
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 print("文件目录: ", cwd)
@@ -28,7 +29,7 @@ def main(_):
 
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split(TRAIN_OR_VAL, FLOWERS_DATA_DIR)
-        images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE)
+        images, images_raw, labels = load_batch(dataset, batch_size=BATCH_SIZE)
         net = Resnetv2ToFlowerNet(num_classes=dataset.num_classes, is_training=False)
         logits = net.logits_fn(images)
         prediction = tf.nn.softmax(logits)
@@ -38,20 +39,12 @@ def main(_):
         config.gpu_options.allow_growth = True
 
         with tf.Session(config=config) as sess:
-            init_fn(sess)
-            i = 1
-            while i < 100:
-                print("start evaluation")
-                pre = sess.run(prediction)
-                print("end evaluation")
+            with slim.queues.QueueRunners(sess):
+                sess.run(tf.initialize_local_variables())
+                init_fn(sess)
+                pre, np_images_raw, np_labels = sess.run([prediction, images_raw, labels])
                 accuracy = tf.reduce_mean(tf.equal(tf.argmax(pre, 1), labels))
-
                 print('%s: accuracy @ 1 = %.3f' % (datetime.now(), accuracy))
-                tf.summary.scalar('accuracy', accuracy)
-                time.sleep(60)
-                i += 1
-            summary_writer = tf.summary.FileWriter(EVAL_DIR, g)
-            summary_writer.close()
 
 
 if __name__ == "__main__":
