@@ -9,18 +9,15 @@ from tensorflow.contrib.slim.nets import resnet_v2
 import os
 import tensorflow as tf
 
-
-cwd = os.path.dirname(os.path.abspath(__file__))
-print("文件目录: ", cwd)
-
-IMAGE_SIZE = 224
 NUMBER_OF_STEPS = 10000
 BATCH_SIZE = 64
+cwd = os.path.dirname(os.path.abspath(__file__))
 
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
 TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 CHECKPOINT_EXCLUDE_SCOPES = ["resnet_v2_50/logits"]
+PRETRAIN_DIR = os.path.join(cwd, 'model/pretrain/')
 
 
 def get_init_fn(checkpoint_dir, checkpoint_exclude_scopes=None):
@@ -56,7 +53,8 @@ def main(_):
     with tf.Graph().as_default():
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
-        images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE, is_training=True)
+        images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE,
+                                       is_training=True)
 
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
             logits, _ = resnet_v2.resnet_v2_50(images,
