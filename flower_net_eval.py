@@ -39,17 +39,18 @@ def main(_):
 
         with tf.Session(config=config) as sess:
             init_fn(sess)
-            print("start evaluation")
-            summary_writer = tf.summary.FileWriter(EVAL_DIR, g)
             i = 1
             while i < 100:
+                print("start evaluation")
                 pre = sess.run(prediction)
+                print("end evaluation")
                 accuracy = tf.reduce_mean(tf.equal(tf.argmax(pre), labels))
 
                 print('%s: accuracy @ 1 = %.3f' % (datetime.now(), accuracy))
                 tf.summary.scalar('accuracy', accuracy)
                 time.sleep(60)
                 i += 1
+            summary_writer = tf.summary.FileWriter(EVAL_DIR, g)
             summary_writer.close()
 
 
