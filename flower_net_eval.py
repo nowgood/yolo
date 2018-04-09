@@ -29,7 +29,7 @@ def main(_):
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split(TRAIN_OR_VAL, FLOWERS_DATA_DIR)
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE)
-        net = Resnetv2ToFlowerNet(num_classes=dataset.num_classes)
+        net = Resnetv2ToFlowerNet(num_classes=dataset.num_classes, is_training=False)
         logits = net.logits_fn(images)
         prediction = tf.nn.softmax(logits)
         init_fn = net.get_init_fn(checkpoint_dir=TRAIN_DIR)
@@ -44,7 +44,7 @@ def main(_):
                 print("start evaluation")
                 pre = sess.run(prediction)
                 print("end evaluation")
-                accuracy = tf.reduce_mean(tf.equal(tf.argmax(pre), labels))
+                accuracy = tf.reduce_mean(tf.equal(tf.argmax(pre, 1), labels))
 
                 print('%s: accuracy @ 1 = %.3f' % (datetime.now(), accuracy))
                 tf.summary.scalar('accuracy', accuracy)
