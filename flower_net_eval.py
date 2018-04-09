@@ -10,9 +10,6 @@ from tensorflow.contrib import slim
 import time
 
 cwd = os.path.dirname(os.path.abspath(__file__))
-print("文件目录: ", cwd)
-
-
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
 TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 TRAIN_OR_VAL = 'validation'

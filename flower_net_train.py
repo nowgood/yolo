@@ -22,10 +22,6 @@ PRETRAIN_DIR = os.path.join(cwd, 'model/pretrain/')
 
 def get_init_fn(checkpoint_dir, checkpoint_exclude_scopes=None):
     """Returns a function run by the chief worker to warm-start the training."""
-    if checkpoint_exclude_scopes is None:
-        checkpoint_name = tf.train.latest_checkpoint(checkpoint_dir)
-        return slim.assign_from_checkpoint_fn(os.path.join(checkpoint_dir, checkpoint_name),
-                                              slim.get_model_variables())
 
     exclusions = [scope.strip() for scope in checkpoint_exclude_scopes]
 
@@ -63,7 +59,8 @@ def main(_):
             logits = tf.squeeze(tf.convert_to_tensor(logits, tf.float32))
 
         one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-        loss = tf.losses.softmax_cross_entropy(logits, one_hot_labels)
+        loss = tf.losses.softmax_cross_entropy(one_hot_labels=one_hot_labels,
+                                               logits=logits)
         slim.losses.add_loss(loss)
         total_loss = slim.losses.get_total_loss()
         tf.summary.scalar('losses/total loss', total_loss)
