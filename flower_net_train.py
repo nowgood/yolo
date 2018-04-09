@@ -76,10 +76,10 @@ def main(_):
             train_op,
             logdir=TRAIN_DIR,
             init_fn=get_init_fn(checkpoint_exclude_scopes=CHECKPOINT_EXCLUDE_SCOPES,
-                                checkpoint_dir=TRAIN_DIR),
+                                checkpoint_dir=PRETRAIN_DIR),
             number_of_steps=NUMBER_OF_STEPS,
-            trace_every_n_steps=50,
-            log_every_n_steps=500)
+            trace_every_n_steps=500,
+            log_every_n_steps=50)
 
         print('Finished training. Last batch loss %f' % final_loss)
 

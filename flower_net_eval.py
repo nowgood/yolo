@@ -47,7 +47,7 @@ def main(_):
                     init_fn = slim.assign_from_checkpoint_fn(os.path.join(TRAIN_DIR, checkpoint_name),
                                                              slim.get_model_variables())
 
-                    sess.run(tf.initialize_local_variables())
+                    sess.run(tf.local_variables_initializer())
                     init_fn(sess)
                     correct_pred = tf.equal(tf.argmax(prediction, 1), labels)
                     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
