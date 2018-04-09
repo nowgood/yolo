@@ -49,7 +49,7 @@ def main(_):
         final_loss = slim.learning.train(
             train_op,
             logdir=TRAIN_DIR,
-            init_fn=net.get_init_fn(False),
+            init_fn=net.get_init_fn(False, checkpoint_dir=TRAIN_DIR),
             number_of_steps=NUMBER_OF_STEPS,
             trace_every_n_steps=50,
             log_every_n_steps=50)
