@@ -46,7 +46,7 @@ def main(_):
     download_dataset.maybe_download_and_extract(FLOWERS_DATA_DIR, _DATA_URL)
     convert_flowers_to_tfrecord.run(FLOWERS_DATA_DIR)
     
-    with tf.Graph().as_default():
+    with tf.Graph().as_default() as g:
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE,
@@ -63,10 +63,13 @@ def main(_):
                                                logits=logits)
         slim.losses.add_loss(loss)
         total_loss = slim.losses.get_total_loss()
-        tf.summary.scalar('losses/total loss', total_loss)
+        tf.summary.scalar('losses/total_loss', total_loss)
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
-        train_op = slim.learning.create_train_op(total_loss, optimizer)
+        # 梯度根性只更新最后一层
+        var2training = slim.get_trainable_variables(scope="logits")
+        optimizer = tf.train.AdamOptimizer()
+        train_op = slim.learning.create_train_op(total_loss, optimizer,
+                                                 variables_to_train=var2training)
 
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True

@@ -34,7 +34,6 @@ def main(_):
 
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
-        tf.summary.FileWriter(EVAL_DIR, g)
 
         with tf.Session(config=config) as sess:
             with slim.queues.QueueRunners(sess):
@@ -51,6 +50,8 @@ def main(_):
                     acc = sess.run(accuracy)
                     tf.summary.scalar("accuracy", acc)
                     print('%s: accuracy @ 1 = %.3f' % (datetime.now(), acc))
+                    writer = tf.summary.FileWriter(EVAL_DIR, g)
+                    writer.close()
                     time.sleep(10)
 
 
