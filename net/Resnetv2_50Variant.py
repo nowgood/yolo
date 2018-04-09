@@ -8,9 +8,7 @@ import tensorflow as tf
 
 class Resnetv2ToFlowerNet(object):
 
-    def __init__(self, checkpoint_exclude_scopes, num_classes,
-                 checkpoint_dir, is_training=True):
-        self._checkpoint_exclude_scopes = checkpoint_exclude_scopes
+    def __init__(self, num_classes, is_training=True):
         self._num_classes = num_classes
         self._is_training = is_training
 
@@ -21,15 +19,15 @@ class Resnetv2ToFlowerNet(object):
             logits = tf.convert_to_tensor(logits, tf.float32)
             return tf.squeeze(logits)
 
-    def get_init_fn(self, pretraining, checkpoint_dir):
+    def get_init_fn(self, checkpoint_dir, checkpoint_exclude_scopes=None):
         """Returns a function run by the chief worker to warm-start the training."""\
 
-        if not pretraining:
+        if checkpoint_exclude_scopes is None:
             checkpoint_name = tf.train.latest_checkpoint(checkpoint_dir)
             return slim.assign_from_checkpoint_fn(os.path.join(checkpoint_dir, checkpoint_name),
                                                   slim.get_model_variables())
 
-        exclusions = [scope.strip() for scope in self._checkpoint_exclude_scopes]
+        exclusions = [scope.strip() for scope in checkpoint_exclude_scopes]
 
         variables_to_restore = []
         for var in slim.get_model_variables():

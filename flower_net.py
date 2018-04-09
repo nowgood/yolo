@@ -19,7 +19,6 @@ BATCH_SIZE = 128
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
 TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
-CHECKPOINTS_DIR = os.path.join(cwd, "model/pretrain/")
 CHECKPOINT_EXCLUDE_SCOPES = ["resnet_v2_50/logits"]
 
 
@@ -33,8 +32,7 @@ def main(_):
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE, is_training=True)
-        net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes,
-                                  checkpoint_dir=TRAIN_DIR)
+        net = Resnetv2ToFlowerNet(num_classes=dataset.num_classes)
         logits = net.logits_fn(images)
         one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
         slim.losses.softmax_cross_entropy(logits, one_hot_labels)
@@ -49,7 +47,8 @@ def main(_):
         final_loss = slim.learning.train(
             train_op,
             logdir=TRAIN_DIR,
-            init_fn=net.get_init_fn(False, checkpoint_dir=TRAIN_DIR),
+            init_fn=net.get_init_fn(checkpoint_exclude_scopes=CHECKPOINT_EXCLUDE_SCOPES,
+                                    checkpoint_dir=TRAIN_DIR),
             number_of_steps=NUMBER_OF_STEPS,
             trace_every_n_steps=50,
             log_every_n_steps=50)
