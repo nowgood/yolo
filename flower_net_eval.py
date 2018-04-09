@@ -18,7 +18,7 @@ TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 TRAIN_OR_VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 
 
 def main(_):
@@ -32,7 +32,7 @@ def main(_):
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
             logits, _ = resnet_v2.resnet_v2_50(images,
                                                num_classes=dataset.num_classes,
-                                               is_training=True)
+                                               is_training=False)
             logits = tf.squeeze(tf.convert_to_tensor(logits, tf.float32))
 
         config = tf.ConfigProto()
@@ -44,7 +44,6 @@ def main(_):
                 while True:
                     prediction = tf.nn.softmax(logits)
                     checkpoint_name = tf.train.latest_checkpoint(TRAIN_DIR)
-                    #checkpoint_name = os.path.join(TRAIN_DIR, "model.ckpt-8508")
                     init_fn = slim.assign_from_checkpoint_fn(os.path.join(TRAIN_DIR, checkpoint_name),
                                                              slim.get_model_variables())
 

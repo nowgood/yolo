@@ -15,7 +15,7 @@ print("文件目录: ", cwd)
 
 IMAGE_SIZE = 224
 NUMBER_OF_STEPS = 10000
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
@@ -45,7 +45,6 @@ def get_init_fn(checkpoint_dir, checkpoint_exclude_scopes=None):
     return slim.assign_from_checkpoint_fn(
         os.path.join(checkpoint_dir, 'resnet_v2_50.ckpt'),
         variables_to_restore)
-
 
 
 def main(_):
