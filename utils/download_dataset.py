@@ -3,6 +3,7 @@ from six.moves import urllib
 import os
 import sys
 import tarfile
+import tensorflow as tf
 
 
 def maybe_download_and_extract(dataset_dir, dataset_url):
@@ -24,3 +25,16 @@ def maybe_download_and_extract(dataset_dir, dataset_url):
         statinfo = os.stat(filepath)
         print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
+
+
+def clean_up_temporary_files(dataset_dir, dataset_url):
+    """Removes temporary files used to create the dataset.
+
+  Args:
+    dataset_dir: The directory where the temporary files are stored.
+  """
+    filename = dataset_url.split('/')[-1]
+    filepath = os.path.join(dataset_dir, filename)
+    tf.gfile.Remove(filepath)
+    tmp_dir = os.path.join(dataset_dir, filename)
+    tf.gfile.DeleteRecursively(tmp_dir)
