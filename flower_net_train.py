@@ -68,6 +68,9 @@ def main(_):
         optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
         train_op = slim.learning.create_train_op(total_loss, optimizer)
 
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+
         print("start training")
         final_loss = slim.learning.train(
             train_op,
@@ -76,7 +79,8 @@ def main(_):
                                 checkpoint_dir=PRETRAIN_DIR),
             number_of_steps=NUMBER_OF_STEPS,
             trace_every_n_steps=500,
-            log_every_n_steps=50)
+            log_every_n_steps=50,
+            session_config=config)
 
         print('Finished training. Last batch loss %f' % final_loss)
 
