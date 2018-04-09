@@ -5,6 +5,7 @@ import tensorflow as tf
 from net.Resnetv2_50Variant import Resnetv2ToFlowerNet
 from utils import flowers
 from preprocess.get_minibatch_input import load_batch
+from datetime import datetime
 import time
 
 cwd = os.path.dirname(os.path.abspath(__file__))
@@ -18,11 +19,13 @@ _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
 TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 TRAIN_OR_VAL = 'validation'
+EVAL_DIR =  os.path.join(cwd, 'model/eval/flower_photos/')
 
 
 def main(_):
 
-    with tf.Graph().as_default():
+    with tf.Graph().as_default() as g:
+
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split(TRAIN_OR_VAL, FLOWERS_DATA_DIR)
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE)
@@ -36,11 +39,17 @@ def main(_):
         with tf.Session(config=config) as sess:
             init_fn(sess)
             print("start evaluation")
-            while True:
+            summary_writer = tf.summary.FileWriter(EVAL_DIR, g)
+            i = 1
+            while i < 100:
                 sess.run(logits)
                 accuracy = tf.reduce_mean(tf.equal(tf.argmax(logits), labels))
+
+                print('%s: accuracy @ 1 = %.3f' % (datetime.now(), precision))
                 tf.summary.scalar('accuracy', accuracy)
                 time.sleep(60)
+                i += 1
+            summary_writer.close()
 
 
 if __name__ == "__main__":
