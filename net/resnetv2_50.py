@@ -14,7 +14,6 @@ from utils import download_dataset
 
 sys.path.append('./')
 
-
 image_size = 224
 checkpoints_dir = "../model/pretrain/"
 
