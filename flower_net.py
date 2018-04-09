@@ -30,7 +30,7 @@ def main(_):
     convert_flowers_to_tfrecord.run(FLOWERS_DATA_DIR)
     
     with tf.Graph().as_default():
-
+        tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE, is_training=True)
         net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes,
@@ -45,6 +45,7 @@ def main(_):
         train_op = slim.learning.create_train_op(total_loss, optimizer)
 
         # Run the training:
+        print("start training")
         final_loss = slim.learning.train(
             train_op,
             logdir=TRAIN_DIR,
@@ -54,6 +55,7 @@ def main(_):
             log_every_n_steps=50)
 
         print('Finished training. Last batch loss %f' % final_loss)
+
 
 if __name__ == "__main__":
     tf.app.run()
