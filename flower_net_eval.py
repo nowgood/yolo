@@ -45,8 +45,8 @@ def main(_):
                 print(labels)
                 accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(prediction, 1), labels), tf.float32))
                 print(accuracy)
-                sess.run(accuracy)
-                print('%s: accuracy @ 1 = %.3f' % (datetime.now(), accuracy))
+                acc = sess.run(accuracy)
+                print('%s: accuracy @ 1 = %.3f' % (datetime.now(), acc))
 
 
 if __name__ == "__main__":
