@@ -22,7 +22,7 @@ class Resnetv2ToFlowerNet(object):
             logits = tf.convert_to_tensor(logits, tf.float32)
             return tf.squeeze(logits)
 
-    def get_init_fn(self):
+    def get_init_fn(self, is_pretraning):
         """Returns a function run by the chief worker to warm-start the training."""
 
         exclusions = [scope.strip() for scope in self._checkpoint_exclude_scopes]
@@ -37,7 +37,14 @@ class Resnetv2ToFlowerNet(object):
             if not excluded:
                 variables_to_restore.append(var)
 
+            from net.flower_net import TRAIN_DIR
+            if not is_pretraning:
+                ckpt_name = tf.train.latest_checkpoint
+                ckpt_path = TRAIN_DIR
+            else:
+                ckpt_name = self._checkpoint_dir
+                ckpt_path= 'resnet_v2_50.ckpt'
         return slim.assign_from_checkpoint_fn(
-            os.path.join(self._checkpoint_dir, 'resnet_v2_50.ckpt'),
+            os.path.join(ckpt_path, ckpt_name),
             variables_to_restore)
 

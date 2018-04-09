@@ -187,8 +187,6 @@ def run(dataset_dir):
     if _dataset_exists(dataset_dir):
         print('Dataset files already exist. Exiting without re-creating them.')
         return
-
-    download_dataset.maybe_download_and_extract(_DATA_URL, dataset_dir)
     photo_filenames, class_names = _get_filenames_and_classes(dataset_dir)
     class_names_to_ids = dict(zip(class_names, range(len(class_names))))
 
