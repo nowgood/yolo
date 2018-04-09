@@ -2,14 +2,14 @@
 
 import tensorflow as tf
 from tensorflow.contrib import slim
-
 from net.Resnetv2_50Variant import Resnetv2ToFlowerNet
 import os
 import sys
 from utils import flowers
 from preprocess.get_minibatch_input import load_batch
-from preprocess import download_and_convert_flowers
+from preprocess import convert_flowers_to_tfrecord
 from utils import download_dataset
+
 sys.path.append('./')
 cwd = os.getcwd()
 print(cwd)
@@ -30,7 +30,7 @@ def main(_):
 
     # download and conver flower_photos dataset to tfrecord
     download_dataset.maybe_download_and_extract(FLOWERS_DATA_DIR, _DATA_URL)
-    download_and_convert_flowers.run(FLOWERS_DATA_DIR)
+    convert_flowers_to_tfrecord.run(FLOWERS_DATA_DIR)
     
     with tf.Graph().as_default():
 

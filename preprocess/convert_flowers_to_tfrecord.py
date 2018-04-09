@@ -178,9 +178,9 @@ def _dataset_exists(dataset_dir):
 def run(dataset_dir):
     """Runs the download and conversion operation.
 
-  Args:
+    Args:
     dataset_dir: The dataset directory where the dataset is stored.
-  """
+    """
     if not tf.gfile.Exists(dataset_dir):
         tf.gfile.MakeDirs(dataset_dir)
 

@@ -5,9 +5,10 @@ import sys
 import tarfile
 
 
-def maybe_download_and_extract(data_dir, dataset_url):
+def maybe_download_and_extract(dataset_dir, dataset_url):
     """Download and extract the tarball datasets"""
-    dest_directory = data_dir
+
+    dest_directory = dataset_dir
     if not os.path.exists(dest_directory):
        os.makedirs(dest_directory)
 
