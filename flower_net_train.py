@@ -83,7 +83,8 @@ def main(_):
             number_of_steps=NUMBER_OF_STEPS,
             trace_every_n_steps=500,
             log_every_n_steps=50,
-            session_config=config)
+            session_config=config,
+            save_interval_secs=60)
 
         print('Finished training. Last batch loss %f' % final_loss)
 
