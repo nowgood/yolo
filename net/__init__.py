@@ -1,3 +1,4 @@
 # -*-coding:utf-8-*-
 
-import utils
+import sys
+sys.path.append('./')

@@ -151,20 +151,6 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
     sys.stdout.flush()
 
 
-def _clean_up_temporary_files(dataset_dir):
-    """Removes temporary files used to create the dataset.
-
-  Args:
-    dataset_dir: The directory where the temporary files are stored.
-  """
-    filename = _DATA_URL.split('/')[-1]
-    filepath = os.path.join(dataset_dir, filename)
-    tf.gfile.Remove(filepath)
-
-    tmp_dir = os.path.join(dataset_dir, 'flower_photos')
-    tf.gfile.DeleteRecursively(tmp_dir)
-
-
 def _dataset_exists(dataset_dir):
     for split_name in ['train', 'validation']:
         for shard_id in range(_NUM_SHARDS):
@@ -206,5 +192,4 @@ def run(dataset_dir):
     labels_to_class_names = dict(zip(range(len(class_names)), class_names))
     dataset_utils.write_label_file(labels_to_class_names, dataset_dir)
 
-    _clean_up_temporary_files(dataset_dir)
     print('\nFinished converting the Flowers dataset!')

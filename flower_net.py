@@ -1,28 +1,25 @@
 # -*-coding:utf-8-*-
 
+import os
 import tensorflow as tf
 from tensorflow.contrib import slim
 from net.Resnetv2_50Variant import Resnetv2ToFlowerNet
-import os
-import sys
 from utils import flowers
 from preprocess.get_minibatch_input import load_batch
 from preprocess import convert_flowers_to_tfrecord
 from utils import download_dataset
 
-sys.path.append('./')
-cwd = os.getcwd()
-print(cwd)
+cwd = os.path.dirname(os.path.abspath(__file__))
+print("文件目录: ", cwd)
 
 IMAGE_SIZE = 224
 NUMBER_OF_STEPS = 10000
 BATCH_SIZE = 128
 
 _DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
-cwd = os.getcwd()
-FLOWERS_DATA_DIR = os.path.join(cwd, '../datasets/flower_photos')
-TRAIN_DIR = os.path.join(cwd, '../model/train/flower_photos/')
-CHECKPOINTS_DIR = os.path.join(cwd, "../model/pretrain/")
+FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
+TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
+CHECKPOINTS_DIR = os.path.join(cwd, "model/pretrain/")
 CHECKPOINT_EXCLUDE_SCOPES = ["resnet_v2_50/logits"]
 
 
@@ -36,12 +33,10 @@ def main(_):
 
         dataset = flowers.get_split('train', FLOWERS_DATA_DIR)
         images, _, labels = load_batch(dataset, batch_size=BATCH_SIZE, is_training=True)
-        net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes, checkpoint_dir=TRAIN_DIR)
-
+        net = Resnetv2ToFlowerNet(CHECKPOINT_EXCLUDE_SCOPES, num_classes=dataset.num_classes,
+                                  checkpoint_dir=TRAIN_DIR)
         logits = net.logits_fn(images)
-        print(logits.shape)
         one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-        print(one_hot_labels.shape)
         slim.losses.softmax_cross_entropy(logits, one_hot_labels)
         total_loss = slim.losses.get_total_loss()
         tf.summary.scalar('losses/Total Loss', total_loss)
@@ -59,7 +54,6 @@ def main(_):
             log_every_n_steps=50)
 
         print('Finished training. Last batch loss %f' % final_loss)
-
 
 if __name__ == "__main__":
     tf.app.run()

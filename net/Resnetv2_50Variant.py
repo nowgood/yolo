@@ -9,7 +9,7 @@ import tensorflow as tf
 class Resnetv2ToFlowerNet(object):
 
     def __init__(self, checkpoint_exclude_scopes, num_classes,
-                 is_training=True, checkpoint_dir='../model/pretrain'):
+                 is_training=True, checkpoint_dir='model/pretrain'):
         self._checkpoint_exclude_scopes = checkpoint_exclude_scopes
         self._num_classes = num_classes
         self._is_training = is_training
@@ -37,9 +37,9 @@ class Resnetv2ToFlowerNet(object):
             if not excluded:
                 variables_to_restore.append(var)
 
-            from net.flower_net import TRAIN_DIR
+            from flower_net import TRAIN_DIR
             if not is_pretraning:
-                ckpt_name = tf.train.latest_checkpoint
+                ckpt_name = tf.train.latest_checkpoint(TRAIN_DIR)
                 ckpt_path = TRAIN_DIR
             else:
                 ckpt_name = self._checkpoint_dir
