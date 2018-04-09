@@ -59,7 +59,7 @@ def main(_):
             logits = tf.squeeze(tf.convert_to_tensor(logits, tf.float32))
 
         one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-        loss = tf.losses.softmax_cross_entropy(one_hot_labels=one_hot_labels,
+        loss = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_labels,
                                                logits=logits)
         slim.losses.add_loss(loss)
         total_loss = slim.losses.get_total_loss()
