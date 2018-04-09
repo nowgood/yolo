@@ -66,7 +66,7 @@ def main(_):
         tf.summary.scalar('losses/total_loss', total_loss)
 
         # 梯度根性只更新最后一层
-        var2training = slim.get_trainable_variables(scope="logits")
+        var2training = slim.get_trainable_variables(scope="resnet_v2_50/logits")
         optimizer = tf.train.AdamOptimizer()
         train_op = slim.learning.create_train_op(total_loss, optimizer,
                                                  variables_to_train=var2training)
