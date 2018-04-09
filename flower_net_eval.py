@@ -27,11 +27,12 @@ def main(_):
 
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split(TRAIN_OR_VAL, FLOWERS_DATA_DIR)
-        images, images_raw, labels = load_batch(dataset, batch_size=BATCH_SIZE)
+        images, images_raw, labels = load_batch(dataset, batch_size=BATCH_SIZE,
+                                                is_training=False)
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
             logits, _ = resnet_v2.resnet_v2_50(images,
                                                num_classes=dataset.num_classes,
-                                               is_training=True)
+                                               is_training=False)
             logits = tf.squeeze(tf.convert_to_tensor(logits, tf.float32))
 
         config = tf.ConfigProto()
@@ -43,6 +44,7 @@ def main(_):
                 while True:
                     prediction = tf.nn.softmax(logits)
                     checkpoint_name = tf.train.latest_checkpoint(TRAIN_DIR)
+                    checkpoint_name = os.path.join(TRAIN_DIR, "model.ckpt-8508")
                     init_fn = slim.assign_from_checkpoint_fn(os.path.join(TRAIN_DIR, checkpoint_name),
                                                              slim.get_model_variables())
 
