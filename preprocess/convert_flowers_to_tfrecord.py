@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-r"""Downloads and converts Flowers data to TFRecords of TF-Example protos.
+r"""converts Flowers data to TFRecords of TF-Example protos.
 
-This module downloads the Flowers data, uncompresses it, reads the files
-that make up the Flowers data and creates two TFRecord datasets: one for train
-and one for test. Each TFRecord dataset is comprised of a set of TF-Example
+This module reads the files that make up the Flowers data and creates two
+TFRecord datasets: one for train and one for test. Each TFRecord dataset is comprised of a set of TF-Example
 protocol buffers, each of which contain a single image and label.
 
 The script should take about a minute to run.
@@ -36,9 +35,6 @@ import tensorflow as tf
 
 from utils import download_dataset
 from utils import dataset_utils
-
-# The URL where the Flowers data can be downloaded.
-_DATA_URL = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 
 # The number of images in the validation set.
 _NUM_VALIDATION = 350
@@ -162,13 +158,11 @@ def _dataset_exists(dataset_dir):
 
 
 def run(dataset_dir):
-    """Runs the download and conversion operation.
+    """Runs conversion operation.
 
     Args:
     dataset_dir: The dataset directory where the dataset is stored.
     """
-    if not tf.gfile.Exists(dataset_dir):
-        tf.gfile.MakeDirs(dataset_dir)
 
     if _dataset_exists(dataset_dir):
         print('Dataset files already exist. Exiting without re-creating them.')
