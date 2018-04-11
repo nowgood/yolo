@@ -71,6 +71,9 @@ def main(_):
         train_op = slim.learning.create_train_op(total_loss, optimizer,
                                                  variables_to_train=var2training)
 
+        init_fn = get_init_fn(checkpoint_exclude_scopes=CHECKPOINT_EXCLUDE_SCOPES,
+                              checkpoint_dir=PRETRAIN_DIR)
+
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
 
@@ -78,8 +81,7 @@ def main(_):
         final_loss = slim.learning.train(
             train_op,
             logdir=TRAIN_DIR,
-            init_fn=get_init_fn(checkpoint_exclude_scopes=CHECKPOINT_EXCLUDE_SCOPES,
-                                checkpoint_dir=PRETRAIN_DIR),
+            init_fn=init_fn,
             number_of_steps=NUMBER_OF_STEPS,
             trace_every_n_steps=500,
             log_every_n_steps=50,

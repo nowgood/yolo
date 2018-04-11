@@ -16,3 +16,5 @@ tf.stop_gradient()
 slim.dataset.Dataset
 slim.dataset_data_provider.DatasetDataProvider
 slim.tfexample_decoder.TFExampleDecoder
+
+tf.as_string()
