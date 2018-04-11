@@ -33,10 +33,6 @@ def load_batch(dataset, batch_size=32, height=224, width=224, is_training=False)
     image_raw = tf.image.resize_images(image_raw, [height, width])
     image_raw = tf.squeeze(image_raw)
 
-    image_raw = tf.expand_dims(image_raw, 0)
-    image_raw = tf.image.resize_images(image_raw, [height, width])
-    image_raw = tf.squeeze(image_raw)
-
     # Batch it up.
     images, images_raw, labels = tf.train.batch(
         [image, image_raw, label],

@@ -9,8 +9,10 @@ slim.conv2d
 slim.repeat()
 slim.learning
 tf.estimator.Estimator
-slim.tfexample_decoder.TFExampleDecoder()
+slim.tfexample_decoder.Image
 slim.dataset.Dataset
 slim.learning.train()
 tf.stop_gradient()
-
+slim.dataset.Dataset
+slim.dataset_data_provider.DatasetDataProvider
+slim.tfexample_decoder.TFExampleDecoder

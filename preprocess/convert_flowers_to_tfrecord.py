@@ -168,6 +168,8 @@ def run(dataset_dir):
         print('Dataset files already exist. Exiting without re-creating them.')
         return
     photo_filenames, class_names = _get_filenames_and_classes(dataset_dir)
+
+    # 操作很经典, 记下
     class_names_to_ids = dict(zip(class_names, range(len(class_names))))
 
     # Divide into train and test:

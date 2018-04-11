@@ -4,18 +4,19 @@ import os
 import tensorflow as tf
 from tensorflow.contrib.slim.nets import resnet_v2
 from utils import flowers
-from preprocess.get_minibatch_input import load_batch
+from preprocess.load_batch_data import load_batch
 from datetime import datetime
 from tensorflow.contrib import slim
 import time
+import numpy as np
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
 TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 TRAIN_OR_VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
-
-BATCH_SIZE = 128
+NUM_VALIDATION = 350
+BATCH_SIZE = 64
 
 
 def main(_):
@@ -37,23 +38,30 @@ def main(_):
 
         with tf.Session(config=config) as sess:
             with slim.queues.QueueRunners(sess):
-                while True:
-                    prediction = tf.nn.softmax(logits)
+                writer = tf.summary.FileWriter(EVAL_DIR, g)
+                step = 0
+                true_count = 0
+                while step < 100:
+                    num_iter = tf.ceil(NUM_VALIDATION/BATCH_SIZE)
+                    total_sample_count = num_iter * BATCH_SIZE
+                    sess.run(tf.local_variables_initializer())
                     checkpoint_name = tf.train.latest_checkpoint(TRAIN_DIR)
                     init_fn = slim.assign_from_checkpoint_fn(os.path.join(TRAIN_DIR, checkpoint_name),
                                                              slim.get_model_variables())
-
-                    sess.run(tf.local_variables_initializer())
                     init_fn(sess)
-                    correct_pred = tf.equal(tf.argmax(prediction, 1), labels)
-                    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-                    acc = sess.run(accuracy)
-                    tf.summary.scalar("accuracy", acc)
-                    print('%s: accuracy @ 1 = %.3f' % (datetime.now(), acc))
-                    writer = tf.summary.FileWriter(EVAL_DIR, g)
-                    writer.close()
-                    time.sleep(10)
 
+                    top_k_op = tf.nn.in_top_k(logits, labels)
+                    for _ in tf.range(num_iter):
+                        predictions = sess.run([top_k_op])
+                        true_count += np.sum(predictions)
+                        step += 1
+                    precision = true_count / total_sample_count
+                    tf.summary.scalar("precision", precision)
+                    print('%s: accuracy = %.3f' % (datetime.now(), precision))
+
+                    step += 1
+                    time.sleep(20)
+                writer.close()
 
 if __name__ == "__main__":
     tf.app.run()

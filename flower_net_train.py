@@ -1,7 +1,7 @@
 # -*-coding:utf-8-*-
 
 from utils import flowers
-from preprocess.get_minibatch_input import load_batch
+from preprocess.load_batch_data import load_batch
 from preprocess import convert_flowers_to_tfrecord
 from utils import download_dataset
 from tensorflow.contrib import slim
