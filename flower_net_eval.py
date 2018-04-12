@@ -17,6 +17,7 @@ VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 NUM_VALIDATION = 350
 BATCH_SIZE = 64
+IMAGE_SIZE = 224
 
 """
 precision changes per eval, maybe resulted from data augmentation
@@ -30,6 +31,7 @@ def main(_):
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split(VAL, FLOWERS_DATA_DIR)
         images, images_raw, labels = load_batch(dataset, batch_size=BATCH_SIZE,
+                                                height= IMAGE_SIZE, width=IMAGE_SIZE,
                                                 is_training=False, shuffle=False)
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
             logits, _ = resnet_v2.resnet_v2_50(images,
