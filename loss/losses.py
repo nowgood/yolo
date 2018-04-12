@@ -102,7 +102,31 @@ def responsible_box_per_image(pred_bbox, gt_bbox):
     return reshaped_class_index, responsible_box_iou, responsible_box_index
 
 
-def loss(prediction, gt_boxes_list, gt_class_list):
+def batch_loss(predictions, gt_boxes_lists, gt_class_lists, batch_size=64):
+
+    locate_losses, iou_losses, cls_losses = 0, 0, 0
+    for i in range(batch_size):
+        prediction = predictions[i, :, :, :]
+        prediction = tf.reshape(prediction, [-1, 30])
+        gt_boxes_list = tf.squeeze(gt_boxes_lists[i, -1, 4])
+        gt_class_list = tf.squeeze(gt_class_lists[i, -1])
+        locate_loss, iou_loss, cls_loss = per_image_loss(prediction,
+                                                         gt_boxes_list,
+                                                         gt_class_list)
+        locate_losses += locate_loss
+        iou_losses += iou_loss
+        cls_losses += cls_loss
+
+    tf.summary.scalar("losses/locate_loss", locate_losses)
+    tf.summary.scalar("losses/iou_loss", iou_losses)
+    tf.summary.scalar("losses/cls_loss", cls_losses)
+
+    total_loss = 5 * locate_losses + iou_losses + cls_losses
+
+    return total_loss
+
+
+def per_image_loss(prediction, gt_boxes_list, gt_class_list):
     """
     Args:
          prediction: reshape 为 [49, 30] 的最后一层 feature map
@@ -111,7 +135,6 @@ def loss(prediction, gt_boxes_list, gt_class_list):
 
     Return: 损失
     """
-
     pred_bbox = prediction[:, 0:8]
     pred_iou = prediction[:, 8:10]
     pred_class = prediction[:, 10:30]
@@ -122,7 +145,7 @@ def loss(prediction, gt_boxes_list, gt_class_list):
 
     locate_loss = 0
     iou_loss = 0
-    cls_los = 0
+    cls_loss = 0
 
     # 一张图片一个一个格子的处理, 哎, 这效率:(
     for idx in tf.range(reshaped_pred_bbox.shape[0]):
@@ -140,10 +163,8 @@ def loss(prediction, gt_boxes_list, gt_class_list):
             iou_loss += 0.5 * tf.square(responsible_box_iou - pred_iou[box_index_per_cell])
         else:
             iou_loss += tf.square(responsible_box_iou - pred_iou[box_index_per_cell])
-            cls_los += tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(
+            cls_loss += tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(
                 labels=gt_class_list[idx, box_index_per_cell],
                 logits=pred_class(idx)))
 
-    total_loss = 5 * locate_loss + iou_loss + cls_los
-
-    return total_loss
+    return locate_loss, iou_loss, cls_loss

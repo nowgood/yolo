@@ -7,11 +7,15 @@ from tensorflow.contrib.framework.python.ops import arg_scope
 from tensorflow.contrib.layers.python.layers import layers
 from tensorflow.contrib import layers as layers_lib
 
+BOX_PER_CELL = 2
+NUM_CELL = 7
+NUM_CLASS = 20
 
-def yolonet(images, num_classes, box_per_cell, is_training=True):
+
+def yolonet(images, is_training=True):
     with tf.Graph().as_default():
         tf.logging.set_verbosity(tf.logging.INFO)
-        output_depth = num_classes + 5 * box_per_cell
+        output_depth = NUM_CLASS + 5 * BOX_PER_CELL
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
             _, end_points = resnet_v2.resnet_v2_50(images, is_training=is_training)
             postnorm = end_points["postnorm"]
