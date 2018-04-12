@@ -16,7 +16,7 @@ TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 NUM_VALIDATION = 350
-BATCH_SIZE = 8
+BATCH_SIZE = 350
 
 
 def main(_):
