@@ -28,7 +28,4 @@ def yolonet(images, num_classes, box_per_cell, is_training=True):
     return net
 
 
-slim = tf.contrib.slim
-
-
 

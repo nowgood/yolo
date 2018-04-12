@@ -5,7 +5,7 @@ from tensorflow.contrib import slim
 from preprocess import resnetv2_preprocessing
 
 
-def load_batch(dataset, batch_size=32, height=224, width=224, is_training=False, shuffle=True):
+def load_batch(dataset, batch_size=32, height=256, width=256, is_training=False, shuffle=True):
     """Loads a single batch of data.
 
     Args:

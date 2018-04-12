@@ -16,11 +16,12 @@ TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 NUM_VALIDATION = 350
-BATCH_SIZE = 350
+BATCH_SIZE = 64
 
 """
 precision changes per eval, maybe resulted from data augmentation
 """
+
 
 def main(_):
 
