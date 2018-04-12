@@ -16,7 +16,7 @@ TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 TRAIN_OR_VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 NUM_VALIDATION = 350
-BATCH_SIZE = 32
+BATCH_SIZE = 8
 
 
 def main(_):
@@ -54,7 +54,7 @@ def main(_):
                     for _ in range(num_iter):
                         predictions = sess.run([top_k_op])
                         true_count += np.sum(predictions)
-                        step += 1
+                    step += 1
                     precision = true_count / total_sample_count
                     tf.summary.scalar("precision", precision)
                     print('%s: accuracy = %.3f' % (datetime.now(), precision))
