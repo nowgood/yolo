@@ -40,9 +40,9 @@ def main(_):
             with slim.queues.QueueRunners(sess):
                 writer = tf.summary.FileWriter(EVAL_DIR, g)
                 step = 0
-                true_count = 0
                 while step < 100:
-                    num_iter = tf.ceil(NUM_VALIDATION/BATCH_SIZE)
+                    true_count = 0
+                    num_iter = int(np.ceil(NUM_VALIDATION/BATCH_SIZE))
                     total_sample_count = num_iter * BATCH_SIZE
                     sess.run(tf.local_variables_initializer())
                     checkpoint_name = tf.train.latest_checkpoint(TRAIN_DIR)
@@ -50,8 +50,8 @@ def main(_):
                                                              slim.get_model_variables())
                     init_fn(sess)
 
-                    top_k_op = tf.nn.in_top_k(logits, labels)
-                    for _ in tf.range(num_iter):
+                    top_k_op = tf.nn.in_top_k(logits, labels, 1)
+                    for _ in range(num_iter):
                         predictions = sess.run([top_k_op])
                         true_count += np.sum(predictions)
                         step += 1
@@ -60,7 +60,7 @@ def main(_):
                     print('%s: accuracy = %.3f' % (datetime.now(), precision))
 
                     step += 1
-                    time.sleep(20)
+                    time.sleep(10)
                 writer.close()
 
 
