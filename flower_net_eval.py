@@ -16,7 +16,7 @@ TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
 TRAIN_OR_VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 NUM_VALIDATION = 350
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 
 def main(_):
@@ -26,7 +26,7 @@ def main(_):
         tf.logging.set_verbosity(tf.logging.INFO)
         dataset = flowers.get_split(TRAIN_OR_VAL, FLOWERS_DATA_DIR)
         images, images_raw, labels = load_batch(dataset, batch_size=BATCH_SIZE,
-                                                is_training=False)
+                                                is_training=False, shuffle=False)
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
             logits, _ = resnet_v2.resnet_v2_50(images,
                                                num_classes=dataset.num_classes,
