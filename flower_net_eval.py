@@ -13,7 +13,7 @@ import numpy as np
 cwd = os.path.dirname(os.path.abspath(__file__))
 FLOWERS_DATA_DIR = os.path.join(cwd, 'datasets/flower_photos')
 TRAIN_DIR = os.path.join(cwd, 'model/train/flower_photos/')
-TRAIN_OR_VAL = 'validation'
+VAL = 'validation'
 EVAL_DIR = os.path.join(cwd, 'model/eval/flower_photos/')
 NUM_VALIDATION = 350
 BATCH_SIZE = 8
@@ -24,7 +24,7 @@ def main(_):
     with tf.Graph().as_default() as g:
 
         tf.logging.set_verbosity(tf.logging.INFO)
-        dataset = flowers.get_split(TRAIN_OR_VAL, FLOWERS_DATA_DIR)
+        dataset = flowers.get_split(VAL, FLOWERS_DATA_DIR)
         images, images_raw, labels = load_batch(dataset, batch_size=BATCH_SIZE,
                                                 is_training=False, shuffle=False)
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
@@ -40,11 +40,12 @@ def main(_):
             with slim.queues.QueueRunners(sess):
                 writer = tf.summary.FileWriter(EVAL_DIR, g)
                 step = 0
+                num_iter = int(np.ceil(NUM_VALIDATION / BATCH_SIZE))
+                total_sample_count = num_iter * BATCH_SIZE
                 while step < 100:
                     true_count = 0
-                    num_iter = int(np.ceil(NUM_VALIDATION/BATCH_SIZE))
-                    total_sample_count = num_iter * BATCH_SIZE
-                    sess.run(tf.local_variables_initializer())
+
+                    # sess.run(tf.local_variables_initializer())
                     checkpoint_name = tf.train.latest_checkpoint(TRAIN_DIR)
                     init_fn = slim.assign_from_checkpoint_fn(os.path.join(TRAIN_DIR, checkpoint_name),
                                                              slim.get_model_variables())
@@ -60,7 +61,7 @@ def main(_):
                     print('%s: accuracy = %.3f' % (datetime.now(), precision))
 
                     step += 1
-                    time.sleep(10)
+                    time.sleep(5)
                 writer.close()
 
 
