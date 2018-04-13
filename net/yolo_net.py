@@ -17,13 +17,16 @@ def yolonet(images, is_training=True):
         tf.logging.set_verbosity(tf.logging.INFO)
         output_depth = NUM_CLASS + 5 * BOX_PER_CELL
         with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-            _, end_points = resnet_v2.resnet_v2_50(images, is_training=is_training)
-            postnorm = end_points["postnorm"]
+            bottleneck, _ = resnet_v2.resnet_v2_50(images, global_pool=False,
+                                                   is_training=is_training)
             with arg_scope([layers.batch_norm], is_training=is_training):
-                net = postnorm
-                net = layers_lib.conv2d(net, 512, [1, 1], scope='yolo_layer1')
-                net = layers_lib.conv2d(net, 512, [3, 3], scope='yolo_layer2')
-                net = layers_lib.conv2d(net, 512, [3, 3], scope='yolo_layer3')
+                net = bottleneck
+                net = layers_lib.conv2d(net, 512, [1, 1],
+                                        normalizer_fn=layers.batch_norm, scope='yolo_layer1')
+                net = layers_lib.conv2d(net, 512, [3, 3],
+                                        normalizer_fn=layers.batch_norm, scope='yolo_layer2')
+                net = layers_lib.conv2d(net, 512, [3, 3],
+                                        normalizer_fn=layers.batch_norm, scope='yolo_layer3')
                 net = layers_lib.conv2d(net, output_depth, [1, 1],
                                         activation_fn=None,
                                         normalizer_fn=None,

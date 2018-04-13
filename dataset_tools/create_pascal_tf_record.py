@@ -37,11 +37,12 @@ from utils import dataset_utils
 from utils import label_map_util
 
 cwd = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(cwd, "../datasets/pascal_voc")
+OUTPUT_DIR = os.path.join(cwd, "../datasets/voc2007/pascal_voc.tfrecords")
 LABEL_MAP_PATH = os.path.join(cwd, "../data/pascal_label_map.pbtxt")
 
 flags = tf.app.flags
-flags.DEFINE_string('data_dir', '', 'Root directory to raw PASCAL VOC dataset.')
+flags.DEFINE_string('data_dir', '/home/nowgood/datasets/pascalvoc2007/VOCdevkit',
+                    'Root directory to raw PASCAL VOC dataset.')
 flags.DEFINE_string('set', 'trainval', 'Convert training set, validation set or merged set.')
 flags.DEFINE_string('annotations_dir', 'Annotations',
                     '(Relative) path to annotations directory.')

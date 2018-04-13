@@ -22,7 +22,7 @@ def preprocess(image, output_height=224, output_width=224):
     image = tf.image.resize_images(image, [output_height, output_width], method=1)  # 方法一可以看!
     image.set_shape([output_height, output_width, 3])
     image = tf.to_float(image)
-    return _mean_image_subtraction(image, [_R_MEAN, _G_MEAN, _B_MEAN])
+    return tf.image.per_image_standardization(_mean_image_subtraction(image, [_R_MEAN, _G_MEAN, _B_MEAN]))
 
 
 def _mean_image_subtraction(image, means):
@@ -70,11 +70,11 @@ def scale(boxlist, y_scale, x_scale, scope=None):
   Returns:
     boxlist: BoxList holding N boxes
   """
+
     with tf.name_scope(scope, 'Scale'):
         y_scale = tf.cast(y_scale, tf.float32)
         x_scale = tf.cast(x_scale, tf.float32)
-        x_min, y_min, x_max, y_max = tf.split(
-            value=boxlist, num_or_size_splits=4, axis=1)
+        x_min, y_min, x_max, y_max = tf.split(value=boxlist, num_or_size_splits=4, axis=1)
         y_min = y_scale * y_min
         y_max = y_scale * y_max
         x_min = x_scale * x_min

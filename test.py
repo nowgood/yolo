@@ -18,3 +18,4 @@ slim.dataset_data_provider.DatasetDataProvider
 slim.tfexample_decoder.TFExampleDecoder
 
 tf.as_string()
+tf.where

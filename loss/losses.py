@@ -108,14 +108,18 @@ def batch_loss(predictions, gt_boxes_lists, gt_class_lists, batch_size=64):
     for i in range(batch_size):
         prediction = predictions[i, :, :, :]
         prediction = tf.reshape(prediction, [-1, 30])
-        gt_boxes_list = tf.squeeze(gt_boxes_lists[i, -1, 4])
-        gt_class_list = tf.squeeze(gt_class_lists[i, -1])
+        gt_boxes_list = tf.reshape(gt_boxes_lists[i, :, :], [-1, 4])
+        gt_class_list = tf.reshape(gt_class_lists[i, :], [-1])
         locate_loss, iou_loss, cls_loss = per_image_loss(prediction,
                                                          gt_boxes_list,
                                                          gt_class_list)
         locate_losses += locate_loss
         iou_losses += iou_loss
         cls_losses += cls_loss
+
+    locate_losses = tf.reduce_mean(locate_losses)
+    iou_losses = tf.reduce_mean(iou_losses)
+    cls_losses = tf.reduce_mean(cls_losses)
 
     tf.summary.scalar("losses/locate_loss", locate_losses)
     tf.summary.scalar("losses/iou_loss", iou_losses)
@@ -148,7 +152,7 @@ def per_image_loss(prediction, gt_boxes_list, gt_class_list):
     cls_loss = 0
 
     # 一张图片一个一个格子的处理, 哎, 这效率:(
-    for idx in tf.range(reshaped_pred_bbox.shape[0]):
+    for idx in range(49):
         box_index_per_cell = responsible_box_index[idx]
         if box_index_per_cell == 0:
             responsible_box = pred_bbox[idx, 0:4]
@@ -159,12 +163,23 @@ def per_image_loss(prediction, gt_boxes_list, gt_class_list):
         locate_loss += tf.square(responsible_box[0:2] - gt_box[0:2]) + \
                     tf.square(tf.sqrt(responsible_box[2:4]) - tf.sqrt(gt_box[2:4]))
 
-        if responsible_box_iou < 0.001:
-            iou_loss += 0.5 * tf.square(responsible_box_iou - pred_iou[box_index_per_cell])
-        else:
-            iou_loss += tf.square(responsible_box_iou - pred_iou[box_index_per_cell])
-            cls_loss += tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(
-                labels=gt_class_list[idx, box_index_per_cell],
-                logits=pred_class(idx)))
+        # def noobj():
+        #    return 0.5 * tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell]), 0.0
+
+        iou_loss = 0.5 * tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell])
+        # def haveobj():
+        #    iou_loss_temp = tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell])
+        #    cls_loss_temp = tf.losses.sparse_softmax_cross_entropy(
+        #        labels=gt_class_list[box_index_per_cell], logits=pred_class[idx])
+        #   return iou_loss_temp, cls_loss_temp
+
+        iou_loss += tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell])
+        cls_loss += tf.losses.sparse_softmax_cross_entropy(
+                labels=gt_class_list[box_index_per_cell], logits=pred_class[idx])
+
+        # iou, cls = tf.cond(tf.less(responsible_box_iou[idx], 0.5), true_fn=noobj, false_fn=haveobj)
+
+        # cls_loss += cls
+        # iou_loss += iou
 
     return locate_loss, iou_loss, cls_loss
