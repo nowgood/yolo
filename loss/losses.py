@@ -162,8 +162,8 @@ def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
 
     for i in range(batch_size):
         prediction = predictions[i, :, :, :]
-        gt_boxes = tf.squeeze(gt_boxes[i, :, :], axis=0)
-        gt_class = tf.squeeze(gt_class[i, :], axis=0)
+        gt_boxes = gt_boxes[i, :, :]
+        gt_class = gt_class[i, :]
         coord_loss1, object_iou_loss1, no_object_iou_loss1, class_loss1 \
             = per_image_loss(prediction, gt_boxes, gt_class)
         coord_loss += coord_loss1
