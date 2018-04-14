@@ -135,6 +135,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
     pred_bbox = pred_bbox + base_boxes
 
     corner_pred_bbox = center_size_bbox_to_corners_bbox(pred_bbox, axis=-1)
+    print(" corner_pred_bbox",  corner_pred_bbox.shape)
     iou = iou_per_image(corner_pred_bbox, gt_bbox)
 
     class_loss = tf.Variable(0, tf.float32)
@@ -160,6 +161,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
             break
 
     responsible_cell_iou = tf.reduce_max(iou, axis=-1)
+    responsible_box_iou = tf.reduce_max(responsible_cell_iou, axis=-1, keep_dims=True)
     responsible_box_index = tf.cast(iou >= responsible_cell_iou, tf.float32)
     print(responsible_box_index.shape)
 
