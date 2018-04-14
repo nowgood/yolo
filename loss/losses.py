@@ -138,7 +138,8 @@ def per_image_loss(pred, gt_bbox, gt_class):
     class_loss = tf.Variable(0, dtype=tf.float32)
     object_iou_loss = tf.Variable(0, dtype=tf.float32)
     coord_loss = tf.Variable(0, dtype=tf.float32)
-    
+    no_object_iou_loss =  tf.Variable(0, dtype=tf.float32)
+
     mask = np.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=np.float32)
 
     for idx in range(MAX_NUM_OBJECT):
@@ -149,10 +150,10 @@ def per_image_loss(pred, gt_bbox, gt_class):
             mask[x, y] = 0.0
             responsible_box_iou = tf.reduce_max(iou[x, y, :, idx])
             responsible_box_index = tf.argmax(iou[x, y, :, idx])
-            object_iou_loss += tf.cast(tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index]), dtype=tf.float32)
+            object_iou_loss += tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index])
             one_hot_label = tf.one_hot(gt_class[idx], depth=20, dtype=tf.float32)
-            class_loss += tf.cast(tf.square(one_hot_label - pred_class[x, y]), tf.float32)
-            coord_loss += tf.cast(5.0 * (tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) + tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4]))), dtype=tf.float32)
+            class_loss += tf.square(one_hot_label - pred_class[x, y])
+            coord_loss += 5.0 * (tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) + tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4])))
         except IndexError:
             break
 
@@ -165,7 +166,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
 
     no_object_pred_iou = responsible_box_index * responsible_box_iou * mask
     print(no_object_pred_iou.shape)
-    no_object_iou_loss = 0.5 * tf.reduce_mean(tf.square(no_object_pred_iou))
+    no_object_iou_loss += 0.5 * tf.reduce_mean(tf.square(no_object_pred_iou))
 
     return coord_loss, object_iou_loss, no_object_iou_loss, class_loss
 
@@ -187,6 +188,11 @@ def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
         no_object_iou_loss += no_object_iou_loss1
         class_loss += class_loss1
 
+    coord_loss = tf.reduce_mean(coord_loss)
+    object_iou_loss = tf.reduce_mean(object_iou_loss)
+    no_object_iou_loss = tf.reduce_mean(no_object_iou_loss)
+    class_loss = tf.reduce_mean(class_loss)
+
     yolo_loss = coord_loss + object_iou_loss + no_object_iou_loss + class_loss
 
     tf.summary.scalar("losses/locate_loss", coord_loss)
@@ -195,5 +201,4 @@ def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
     tf.summary.scalar("losses/no_object_iou_loss", no_object_iou_loss)
     tf.summary.scalar("losses/yolo_loss", yolo_loss)
 
-    tf.assign_add()
     return yolo_loss
