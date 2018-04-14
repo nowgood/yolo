@@ -137,7 +137,6 @@ def per_image_loss(pred, gt_bbox, gt_class):
 
     class_loss = tf.Variable(0, tf.float32)
     object_iou_loss = tf.Variable(0, tf.float32)
-    no_object_iou_loss = tf.Variable(0, tf.float32)
     coord_loss = tf.Variable(0, tf.float32)
     mask = np.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=np.float32)
 
@@ -166,9 +165,9 @@ def per_image_loss(pred, gt_bbox, gt_class):
 
     no_object_pred_iou = responsible_box_index * responsible_box_iou * mask
     print(no_object_pred_iou.shape)
-    no_object_iou_loss += 0.5 * tf.reduce_mean(tf.square(no_object_pred_iou))
+    no_object_iou_loss = 0.5 * tf.reduce_mean(tf.square(no_object_pred_iou))
 
-    return coord_loss, object_iou_loss, no_object_pred_iou, class_loss
+    return coord_loss, object_iou_loss, no_object_iou_loss, class_loss
 
 
 def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
