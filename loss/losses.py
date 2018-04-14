@@ -23,7 +23,7 @@ def corners_bbox_to_center_bbox(bboxlist, axis=-1):
     width = x_max - x_min
     height = y_max - y_min
 
-    return tf.concat(x_center, y_center, width, height, axis=axis)
+    return tf.concat([x_center, y_center, width, height], axis=axis)
 
 
 def area(boxlist, axis=-1, scope=None):
