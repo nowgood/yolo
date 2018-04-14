@@ -148,11 +148,10 @@ def per_image_loss(pred, gt_bbox, gt_class):
             mask[x, y] = 0.0
             responsible_box_iou = tf.reduce_max(iou[x, y, :, idx])
             responsible_box_index = tf.argmax(iou[x, y, :, idx])
-            object_iou_loss += tf.reduce_mean(tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index]))
+            object_iou_loss += tf.cast(tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index]), dtype=tf.float32)
             one_hot_label = tf.one_hot(gt_class[idx], depth=20, dtype=tf.float32)
-            class_loss += tf.reduce_mean(tf.square(one_hot_label - pred_class[x, y]))
-            coord_loss += 5.0 * tf.reduce_mean((tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) +
-                               tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4]))))
+            class_loss += tf.cast(tf.square(one_hot_label - pred_class[x, y]), tf.float32)
+            coord_loss += tf.cast(5.0 * (tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) + tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4]))), dtype=tf.float32)
         except IndexError:
             break
 
