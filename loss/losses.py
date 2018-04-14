@@ -141,7 +141,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
     object_iou_loss = tf.Variable(0, tf.float32)
     no_object_iou_loss = tf.Variable(0, tf.float32)
     coord_loss = tf.Variable(0, tf.float32)
-    mask = tf.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=tf.int32)
+    mask = np.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=tf.int32)
 
     for idx in range(MAX_NUM_OBJECT):
 
@@ -158,7 +158,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
                                tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4])))
         except IndexError:
             break
-            
+
     responsible_cell_iou = tf.reduce_max(iou, axis=-1)
     responsible_box_index = tf.argmax(responsible_cell_iou, axis=-1)
     responsible_box_index = responsible_box_index * mask
