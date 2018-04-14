@@ -28,7 +28,7 @@ def corners_bbox_to_center_bbox(bboxlist, axis=-1):
     return tf.concat([x_center, y_center, width, height], axis=axis)
 
 
-def area(boxlist, axis=-1, scope=None):
+def area(boxlist, axis=-1):
     """Computes area of boxes.
 
       Args:
@@ -38,7 +38,7 @@ def area(boxlist, axis=-1, scope=None):
       Returns:
         a tensor with shape [N] representing box areas.
     """
-    with tf.name_scope(scope, 'Area'):
+    with tf.name_scope('Area'):
         x_min, y_min, x_max, y_max = tf.split(value=boxlist, num_or_size_splits=4, axis=axis)
         heights = tf.maximum(0.0, y_max - y_min)
         widths = tf.maximum(0.0, x_max - x_min)
@@ -135,8 +135,9 @@ def per_image_loss(pred, gt_bbox, gt_class):
     pred_bbox = pred_bbox + base_boxes
 
     corner_pred_bbox = center_size_bbox_to_corners_bbox(pred_bbox, axis=-1)
-    print(" corner_pred_bbox",  corner_pred_bbox.shape)
+    print("corner_pred_bbox",  corner_pred_bbox.shape)
     iou = iou_per_image(corner_pred_bbox, gt_bbox)
+    print("iou shape", iou.shape)
 
     class_loss = tf.Variable(0, tf.float32)
     object_iou_loss = tf.Variable(0, tf.float32)
@@ -161,7 +162,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
             break
 
     responsible_cell_iou = tf.reduce_max(iou, axis=-1)
-    responsible_box_iou = tf.reduce_max(responsible_cell_iou, axis=-1, keep_dims=True)
+    responsible_box_iou = tf.reduce_max(responsible_cell_iou, axis=-1, keepdims=True)
     responsible_box_index = tf.cast(iou >= responsible_box_iou, tf.float32)
     print("responsible_box_index", responsible_box_index.shape)
 
