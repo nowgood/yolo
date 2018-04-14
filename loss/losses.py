@@ -180,7 +180,7 @@ def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
         prediction = predictions[i, :, :, :]
         gt_boxes = gt_boxes[i, :, :]
         gt_class = gt_class[i, :]
-        tf.summary.scalar("gt_class", gt_class)
+        tf.summary.scalar("gt_class", gt_class[1])
         print("herherere")
         coord_loss1, object_iou_loss1, no_object_iou_loss1, class_loss1 \
             = per_image_loss(prediction, gt_boxes, gt_class)
