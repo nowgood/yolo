@@ -13,7 +13,7 @@ from tensorflow.contrib import slim
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 IMAGE_SIZE = 224
-NUMBER_OF_STEPS = 10000
+NUMBER_OF_STEPS = 1000000
 TRAIN_DIR = os.path.join(cwd, 'model/train/voc2007/')
 CHECKPOINT_EXCLUDE_SCOPES = ["resnet_v2_50/logits"]
 PRETRAIN_DIR = os.path.join(cwd, 'model/pretrain/')
@@ -114,10 +114,9 @@ def main(_):
         logdir=TRAIN_DIR,
         init_fn=init_fn,
         number_of_steps=NUMBER_OF_STEPS,
-        trace_every_n_steps=500,
-        log_every_n_steps=50,
-        session_config=config,
-        save_interval_secs=60)
+        trace_every_n_steps=5000,
+        log_every_n_steps=500,
+        session_config=config)
 
     print('Finished training. Last batch loss %f' % final_loss)
 
