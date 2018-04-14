@@ -2,17 +2,31 @@
 
 import tensorflow as tf
 
-
-def center_size_bbox_to_corners_bbox(pred_bbox):
-    x_min = tf.maximum(0, pred_bbox[:, 0] - 0.5 * pred_bbox[:, 2])
-    y_min = tf.maximum(0, pred_bbox[:, 1] - 0.5 * pred_bbox[:, 3])
-    x_max = tf.maximum(0, pred_bbox[:, 0] + pred_bbox[:, 2])
-    y_max = tf.maximum(0, pred_bbox[:, 1] + pred_bbox[:, 3])
-
-    return tf.concat([x_min, y_min, x_max, y_max], axis=1)
+CELL_SIZE = 7
+BOX_PER_CELL = 2
 
 
-def area(boxlist, scope=None):
+def center_size_bbox_to_corners_bbox(bboxlist, axis=-1):
+    x_center, y_center, width, height = tf.split(value=bboxlist, num_or_size_splits=4, axis=axis)
+    x_min = tf.maximum(0, x_center - 0.5 * width)
+    y_min = tf.maximum(0, x_center - 0.5 * height)
+    x_max = tf.maximum(0, x_center + 0.5 * width)
+    y_max = tf.maximum(0, x_center + 0.5 * height)
+
+    return tf.concat([x_min, y_min, x_max, y_max], axis=axis)
+
+
+def corners_bbox_to_center_bbox(bboxlist, axis=-1):
+    x_min, y_min, x_max, y_max = tf.split(value=bboxlist, num_or_size_splits=4, axis=axis)
+    x_center = 0.5 * (x_min + x_max)
+    y_center = 0.5 * (y_min + y_max)
+    width = x_max - x_min
+    height = y_max - y_min
+
+    return tf.concat(x_center, y_center, width, height, axis=axis)
+
+
+def area(boxlist, axis=-1, scope=None):
     """Computes area of boxes.
 
       Args:
@@ -23,42 +37,42 @@ def area(boxlist, scope=None):
         a tensor with shape [N] representing box areas.
     """
     with tf.name_scope(scope, 'Area'):
-        y_min, x_min, y_max, x_max = tf.split(value=boxlist, num_or_size_splits=4, axis=1)
-        return tf.squeeze((y_max - y_min) * (x_max - x_min), [1])
+        x_min, y_min, x_max, y_max = tf.split(value=boxlist, num_or_size_splits=4, axis=axis)
+        heights = tf.maximum(0.0, y_max - y_min)
+        widths = tf.maximum(0.0, x_max - x_min)
+        return tf.squeeze(heights * widths, axis=axis)
 
 
-def intersection_area(pred_boxes, gt_boxes, scope=None):
+def intersection(pred_boxes, gt_boxes, axis=-1):
     """Compute pairwise intersection areas between boxes.
 
       Args:
-        boxlist1: BoxList holding N boxes
-        boxlist2: BoxList holding M boxes
-        scope: name scope.
+        pred_boxes: BoxList holding N boxes [N:4] (xmin, ymin, xmax, ymax)
+        gt_boxes: BoxList holding M boxes [M, 4],  (xmin, ymin, xmax, ymax)
+        axis: xx
 
       Returns:
         a tensor with shape [N, M] representing pairwise intersections
    """
-    with tf.name_scope(scope, 'Intersection'):
-        y_min1, x_min1, y_max1, x_max1 = tf.split(value=pred_boxes, num_or_size_splits=4, axis=1)
-        y_min2, x_min2, y_max2, x_max2 = tf.split(value=gt_boxes, num_or_size_splits=4, axis=1)
+    with tf.name_scope('Intersection'):
+        x_min1, y_min1, x_max1, y_max1 = tf.split(value=pred_boxes, num_or_size_splits=4, axis=axis)
+        x_min2, y_min2, x_max2, y_max2 = tf.split(value=gt_boxes, num_or_size_splits=4, axis=axis)
 
-        all_pairs_min_ymax = tf.minimum(y_max1, tf.transpose(y_max2))
-        all_pairs_max_ymin = tf.maximum(y_min1, tf.transpose(y_min2))
-        all_pairs_min_xmax = tf.minimum(x_max1, tf.transpose(x_max2))
-        all_pairs_max_xmin = tf.maximum(x_min1, tf.transpose(x_min2))
+        max_xmin = tf.maximum(x_min1, tf.transpose(x_min2))
+        max_ymin = tf.maximum(y_min1, tf.transpose(y_min2))
 
-        intersect_heights = tf.maximum(0.0, all_pairs_min_ymax - all_pairs_max_ymin)
-        intersect_widths = tf.maximum(0.0, all_pairs_min_xmax - all_pairs_max_xmin)
+        min_xmax = tf.minimum(x_max1, tf.transpose(x_max2))
+        min_ymax = tf.minimum(y_max1, tf.transpose(y_max2))
 
-        return intersect_heights * intersect_widths
+        return tf.concat([max_xmin, max_ymin, min_xmax, min_ymax], axis=axis)
 
 
-def iou_per_iamge(boxlist1, boxlist2, scope=None):
+def iou_per_image(pred_bbox, gt_bbox, scope=None):
     """Computes pairwise intersection-over-union between box collections.
 
       Args:
-        boxlist1: BoxList holding N boxes
-        boxlist2: BoxList holding M boxes
+        pred_bbox: BoxList holding N boxes [N, 4] (xmin, ymin, xmax, ymax)
+        gt_bbox: BoxList holding M boxes [M. 4] (xmin, ymin, xmax, ymax)
         scope: name scope.
 
       Returns:
@@ -66,120 +80,102 @@ def iou_per_iamge(boxlist1, boxlist2, scope=None):
         and corresponding index(use to find gt_class)
     """
     with tf.name_scope(scope, 'IOU'):
-        intersections = intersection_area(boxlist1, boxlist2)
-        areas1 = area(boxlist1)
-        areas2 = area(boxlist2)
+        intersect = intersection(pred_bbox, gt_bbox)
+        intersect_area = area(intersect)
+        areas1 = area(pred_bbox)
+        areas2 = area(gt_bbox)
 
-        # N 个areas1, M 个 areas2, 通过这种笛卡尔积的方式相加, 从而得到 N×M的矩阵
-        unions = (tf.expand_dims(areas1, 1) +
-                  tf.expand_dims(areas2, 0) - intersections)
-        iou = tf.truediv(intersections, unions)
+        # N 个areas1, M 个 areas2, 通过这种笛卡尔积的方式相加, 从而得到 N×M 的矩阵
+        union_area = tf.expand_dims(areas1, 1) + tf.expand_dims(areas2, 0) - intersect_area + 1e-5
+        iou = tf.truediv(intersect_area, union_area)
 
-        #  真实标签(gt_bbox_list, gt_class_list)的下标
-        gt_list_index = tf.argmax(iou, axis=1)  # per box
-        max_iou = tf.reduce_max(iou, axis=1)  # per box
-        return gt_list_index, max_iou
+        # 真实标签(gt_bbox_list, gt_class_list)的下标
+        # gt_list_index = tf.argmax(iou, axis=1)  # per box
+        # max_iou = tf.reduce_max(iou, axis=1)  # per box
+        # return gt_list_index, max_iou
+
+        return iou
 
 
-def responsible_box_per_image(pred_bbox, gt_bbox):
-    """用于找出一张图片每个 cell 预测的两个 bbox 中用于负责预测的 bbox, pred_bbox shape=[N, 4]
+def per_image_loss(pred, gt_bbox, gt_class):
+    """ 计算一张图片对应的 loss
 
     Args:
-        pred_bbox: 预测 bbox, 维度为 7x7x8
+        pred: 预测 bbox, 维度为 7x7x30
         gt_bbox: 真实 bbox(num_object x 4)
+        gt_class: 真实 class(num_object)
 
-    Returns:
-         用于负责的预测的 bbox, 以及对应类信息
-         responsible_box_index: 每个 bbox 与 gt-bboxes 有最大 Iou 的 gt-bbox 的在
-                                gt-boxer list中索引信息
+    Returns: xx
     """
-    class_index, confidence = iou_per_iamge(pred_bbox, gt_bbox)
-    reshaped_confidence = tf.reshape(confidence, [-1, 2])
-    reshaped_class_index = tf.reshape(class_index, [-1, 2])
-    responsible_box_index = tf.argmax(reshaped_confidence, axis=1)  # per cell
-    responsible_box_iou = tf.reduce_max(reshaped_confidence, axis=1) # per cell
+    center_gt_bbox = corners_bbox_to_center_bbox(gt_bbox)  # center_bbox
+    x_center = tf.floor(center_gt_bbox[:, 0] * CELL_SIZE)
+    y_center = tf.floor(center_gt_bbox[:, 1] * CELL_SIZE)
 
-    return reshaped_class_index, responsible_box_iou, responsible_box_index
+    pred_bbox = pred[:, :, 0:8]
+    pred_bbox = tf.reshape(pred_bbox, [CELL_SIZE, CELL_SIZE, 2, 4])
+    pred_iou = pred[:, :, 8:10]
+    pred_iou = tf.reshape(pred_iou, [CELL_SIZE, CELL_SIZE, 2])
+    pred_class = pred_bbox[:, :, 10:]
+
+    # 将相对于每个 cell left-bottom 的坐标 (x, y), 转化为相对于图片的 left-bottom 的坐标
+    for x in range(CELL_SIZE):
+        for y in range(CELL_SIZE):
+            pred_bbox[x, y, 2, 0] = (pred_bbox[x, y, 2, 0] + x) / CELL_SIZE
+            pred_bbox[x, y, 2, 1] = (pred_bbox[x, y, 2, 1] + y) / CELL_SIZE
+    corner_pred_bbox = center_size_bbox_to_corners_bbox(pred_bbox, axis=-1)
+    iou = iou_per_image(corner_pred_bbox, gt_bbox)
+
+    class_loss = tf.Variable(0, tf.float32)
+    object_iou_loss = tf.Variable(0, tf.float32)
+    no_object_iou_loss = tf.Variable(0, tf.float32)
+    coord_loss = tf.Variable(0, tf.float32)
+    mask = tf.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=tf.int32)
+
+    for idx, x, y in enumerate(zip(x_center, y_center)):
+        mask[x, y] = 0
+        responsible_box_iou = tf.reduce_max(iou[x, y, :, idx])
+        responsible_box_index = tf.argmax(iou[x, y, :, idx])
+        object_iou_loss += tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index])
+        one_hot_label = tf.one_hot(gt_class[idx], depth=20, dtype=tf.float32)
+        class_loss += tf.square(one_hot_label - pred_class[x, y])
+        coord_loss += 5 * (tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) +
+                           tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4])))
+
+    responsible_cell_iou = tf.reduce_max(iou, axis=-1)
+    responsible_box_index = tf.argmax(responsible_cell_iou, axis=-1)
+    responsible_box_index = responsible_box_index * mask
+    no_object_pred_iou = tf.zeros([CELL_SIZE, CELL_SIZE])
+    for i in range(CELL_SIZE):
+        for j in range(CELL_SIZE):
+            no_object_pred_iou[x, y] = pred_iou[x, y, responsible_box_index[x, y]]  # ?
+    no_object_iou_loss += 0.5 * tf.square(no_object_pred_iou)
+
+    return coord_loss, object_iou_loss, no_object_pred_iou, per_image_loss
 
 
-def batch_loss(predictions, gt_boxes_lists, gt_class_lists, batch_size=64):
+def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
+    class_loss = tf.Variable(0, tf.float32)
+    object_iou_loss = tf.Variable(0, tf.float32)
+    no_object_iou_loss = tf.Variable(0, tf.float32)
+    coord_loss = tf.Variable(0, tf.float32)
 
-    locate_losses, iou_losses, cls_losses = 0, 0, 0
     for i in range(batch_size):
         prediction = predictions[i, :, :, :]
-        prediction = tf.reshape(prediction, [-1, 30])
-        gt_boxes_list = tf.reshape(gt_boxes_lists[i, :, :], [-1, 4])
-        gt_class_list = tf.reshape(gt_class_lists[i, :], [-1])
-        locate_loss, iou_loss, cls_loss = per_image_loss(prediction,
-                                                         gt_boxes_list,
-                                                         gt_class_list)
-        locate_losses += locate_loss
-        iou_losses += iou_loss
-        cls_losses += cls_loss
+        gt_boxes = tf.squeeze(gt_boxes[i, :, :], [-1, 4], axis=0)
+        gt_class = tf.squeeze(gt_class[i, :], [-1], axis=0)
+        coord_loss1, object_iou_loss1, no_object_iou_loss1, class_loss1 \
+            = per_image_loss(prediction, gt_boxes, gt_class)
+        coord_loss += coord_loss1
+        object_iou_loss += object_iou_loss1
+        no_object_iou_loss += no_object_iou_loss1
+        class_loss += class_loss1
 
-    locate_losses = tf.reduce_mean(locate_losses)
-    iou_losses = tf.reduce_mean(iou_losses)
-    cls_losses = tf.reduce_mean(cls_losses)
+    yolo_loss = coord_loss + object_iou_loss + no_object_iou_loss + class_loss
 
-    tf.summary.scalar("losses/locate_loss", locate_losses)
-    tf.summary.scalar("losses/iou_loss", iou_losses)
-    tf.summary.scalar("losses/cls_loss", cls_losses)
+    tf.summary.scalar("losses/locate_loss", coord_loss)
+    tf.summary.scalar("losses/class_loss", class_loss)
+    tf.summary.scalar("losses/object_iou_loss", object_iou_loss)
+    tf.summary.scalar("losses/no_object_iou_loss", no_object_iou_loss)
+    tf.summary.scalar("losses/yolo_loss", yolo_loss)
 
-    total_loss = 5 * locate_losses + iou_losses + cls_losses
-
-    return total_loss
-
-
-def per_image_loss(prediction, gt_boxes_list, gt_class_list):
-    """
-    Args:
-         prediction: reshape 为 [49, 30] 的最后一层 feature map
-         gt_boxes_list: 图片真实 bbox
-         gt_class_list: 图片中每个物体的类别
-
-    Return: 损失
-    """
-    pred_bbox = prediction[:, 0:8]
-    pred_iou = prediction[:, 8:10]
-    pred_class = prediction[:, 10:30]
-
-    reshaped_pred_bbox = tf.reshape(pred_bbox, [-1, 4])
-    class_index, responsible_box_iou, responsible_box_index = \
-        responsible_box_per_image(reshaped_pred_bbox, gt_boxes_list)
-
-    locate_loss = 0
-    iou_loss = 0
-    cls_loss = 0
-
-    # 一张图片一个一个格子的处理, 哎, 这效率:(
-    for idx in range(49):
-        box_index_per_cell = responsible_box_index[idx]
-        if box_index_per_cell == 0:
-            responsible_box = pred_bbox[idx, 0:4]
-        else:
-            responsible_box = pred_bbox[idx, 4:8]
-
-        gt_box = gt_boxes_list[class_index[idx, box_index_per_cell]]
-        locate_loss += tf.square(responsible_box[0:2] - gt_box[0:2]) + \
-                    tf.square(tf.sqrt(responsible_box[2:4]) - tf.sqrt(gt_box[2:4]))
-
-        # def noobj():
-        #    return 0.5 * tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell]), 0.0
-
-        iou_loss = 0.5 * tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell])
-        # def haveobj():
-        #    iou_loss_temp = tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell])
-        #    cls_loss_temp = tf.losses.sparse_softmax_cross_entropy(
-        #        labels=gt_class_list[box_index_per_cell], logits=pred_class[idx])
-        #   return iou_loss_temp, cls_loss_temp
-
-        iou_loss += tf.square(responsible_box_iou[idx] - pred_iou[box_index_per_cell])
-        cls_loss += tf.losses.sparse_softmax_cross_entropy(
-                labels=gt_class_list[box_index_per_cell], logits=pred_class[idx])
-
-        # iou, cls = tf.cond(tf.less(responsible_box_iou[idx], 0.5), true_fn=noobj, false_fn=haveobj)
-
-        # cls_loss += cls
-        # iou_loss += iou
-
-    return locate_loss, iou_loss, cls_loss
+    return yolo_loss
