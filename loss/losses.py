@@ -83,6 +83,7 @@ def iou_per_image(pred_bbox, gt_bbox, scope=None):
     """
     with tf.name_scope(scope, 'IOU'):
         intersect = intersection(pred_bbox, gt_bbox)
+        print("intersect shape ", intersect)
         intersect_area = area(intersect)
         areas1 = area(pred_bbox)
         areas2 = area(gt_bbox)
