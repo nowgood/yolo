@@ -120,7 +120,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
     pred_class = pred_bbox[:, :, 10:]
 
     # 由于 tensor 不能直接对某个元素赋值, 所以采用这种方法
-    base_boxes = np.zeros([CELL_SIZE, CELL_SIZE, 4])
+    base_boxes = np.zeros([CELL_SIZE, CELL_SIZE, 4], dtype=tf.float32)
 
     for x in range(CELL_SIZE):
         for y in range(CELL_SIZE):
