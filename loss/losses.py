@@ -146,13 +146,13 @@ def per_image_loss(pred, gt_bbox, gt_class):
         try:
             x = x_center[idx]
             y = y_center[idx]
-            mask[x, y] = 0
+            mask[x, y] = 0.0
             responsible_box_iou = tf.reduce_max(iou[x, y, :, idx])
             responsible_box_index = tf.argmax(iou[x, y, :, idx])
             object_iou_loss += tf.reduce_mean(tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index]))
             one_hot_label = tf.one_hot(gt_class[idx], depth=20, dtype=tf.float32)
             class_loss += tf.reduce_mean(tf.square(one_hot_label - pred_class[x, y]))
-            coord_loss += 5 * tf.reduce_mean((tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) +
+            coord_loss += 5.0 * tf.reduce_mean((tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) +
                                tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4]))))
         except IndexError:
             break
@@ -172,10 +172,10 @@ def per_image_loss(pred, gt_bbox, gt_class):
 
 
 def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
-    class_loss = tf.Variable(0, tf.float32)
-    object_iou_loss = tf.Variable(0, tf.float32)
-    no_object_iou_loss = tf.Variable(0, tf.float32)
-    coord_loss = tf.Variable(0, tf.float32)
+    class_loss = tf.Variable(0.0, tf.float32)
+    object_iou_loss = tf.Variable(0.0, tf.float32)
+    no_object_iou_loss = tf.Variable(0.0, tf.float32)
+    coord_loss = tf.Variable(0.0, tf.float32)
 
     for i in range(batch_size):
         prediction = predictions[i, :, :, :]
