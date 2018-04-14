@@ -5,6 +5,7 @@ import numpy as np
 
 CELL_SIZE = 7
 BOX_PER_CELL = 2
+MAX_NUM_OBJECT = 20
 
 
 def center_size_bbox_to_corners_bbox(bboxlist, axis=-1):
@@ -142,16 +143,22 @@ def per_image_loss(pred, gt_bbox, gt_class):
     coord_loss = tf.Variable(0, tf.float32)
     mask = tf.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=tf.int32)
 
-    for idx, x, y in enumerate(zip(x_center, y_center)):
-        mask[x, y] = 0
-        responsible_box_iou = tf.reduce_max(iou[x, y, :, idx])
-        responsible_box_index = tf.argmax(iou[x, y, :, idx])
-        object_iou_loss += tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index])
-        one_hot_label = tf.one_hot(gt_class[idx], depth=20, dtype=tf.float32)
-        class_loss += tf.square(one_hot_label - pred_class[x, y])
-        coord_loss += 5 * (tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) +
-                           tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4])))
+    for idx in range(MAX_NUM_OBJECT):
 
+        try:
+            x = x_center[idx]
+            y = y_center[idx]
+            mask[x, y] = 0
+            responsible_box_iou = tf.reduce_max(iou[x, y, :, idx])
+            responsible_box_index = tf.argmax(iou[x, y, :, idx])
+            object_iou_loss += tf.square(responsible_box_iou - pred_iou[x, y, responsible_box_index])
+            one_hot_label = tf.one_hot(gt_class[idx], depth=20, dtype=tf.float32)
+            class_loss += tf.square(one_hot_label - pred_class[x, y])
+            coord_loss += 5 * (tf.square(gt_bbox[idx, 0:2] - pred_bbox[x, y, responsible_box_index, 0:2]) +
+                               tf.square(tf.sqrt(gt_bbox[idx, 2:4]) - tf.sqrt(pred_bbox[x, y, responsible_box_index, 2:4])))
+        except IndexError:
+            break
+            
     responsible_cell_iou = tf.reduce_max(iou, axis=-1)
     responsible_box_index = tf.argmax(responsible_cell_iou, axis=-1)
     responsible_box_index = responsible_box_index * mask
