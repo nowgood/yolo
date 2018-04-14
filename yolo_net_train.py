@@ -105,7 +105,7 @@ def main(_):
     init_fn = get_init_fn(checkpoint_exclude_scopes=CHECKPOINT_EXCLUDE_SCOPES,
                           checkpoint_dir=PRETRAIN_DIR)
 
-    tf.summary.merge_all()
+    merge_op = tf.summary.merge_all()
     writer = tf.summary.FileWriter(TRAIN_DIR, tf.get_default_graph())
 
     print("start training")
@@ -117,7 +117,9 @@ def main(_):
         trace_every_n_steps=5000,
         log_every_n_steps=500,
         session_config=config,
-        save_interval_secs=60, summary_writer=writer)
+        save_interval_secs=60,
+        summary_writer=writer,
+        summary_op=merge_op)
 
     writer.close()
 
