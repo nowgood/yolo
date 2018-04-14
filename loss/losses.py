@@ -130,7 +130,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
     base_boxes = np.tile(base_boxes, [1, 1, BOX_PER_CELL, 1])
 
     # 将相对于每个 cell left-bottom 的坐标 (x, y), 转化为相对于图片的 left-bottom 的坐标
-    pred_bbox = tf.concat([pred_bbox[:, :, 2, 0:2]/CELL_SIZE, pred_bbox[:, :, 2, 2:]], axis=-1)
+    pred_bbox = tf.concat([pred_bbox[:, :, :, 0:2]/CELL_SIZE, pred_bbox[:, :, :, 2:]], axis=-1)
     pred_bbox = pred_bbox + base_boxes
 
     corner_pred_bbox = center_size_bbox_to_corners_bbox(pred_bbox, axis=-1)
