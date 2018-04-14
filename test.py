@@ -27,3 +27,13 @@ def test01():
 
 def test02():
     tf.stack()
+
+
+x = tf.ones(shape=[2, 2])
+y = tf.assign(x[1:], 1)
+with tf.Session() as sess:
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    print(sess.run([x, y]))
+
+tf.slice()

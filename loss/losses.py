@@ -1,6 +1,7 @@
 # -*-coding:utf-8-*-
 
 import tensorflow as tf
+import numpy as np
 
 CELL_SIZE = 7
 BOX_PER_CELL = 2
@@ -118,11 +119,20 @@ def per_image_loss(pred, gt_bbox, gt_class):
     pred_iou = tf.reshape(pred_iou, [CELL_SIZE, CELL_SIZE, 2])
     pred_class = pred_bbox[:, :, 10:]
 
-    # 将相对于每个 cell left-bottom 的坐标 (x, y), 转化为相对于图片的 left-bottom 的坐标
+    # 由于 tensor 不能直接对某个元素赋值, 所以采用这种方法
+    base_boxes = np.zeros([CELL_SIZE, CELL_SIZE, 4])
+
     for x in range(CELL_SIZE):
         for y in range(CELL_SIZE):
-            pred_bbox[x, y, :, 0] = (pred_bbox[x, y, :, 0] + x) / CELL_SIZE
-            pred_bbox[x, y, :, 1] = (pred_bbox[x, y, :, 1] + y) / CELL_SIZE
+            base_boxes[x, y, 0] = x / CELL_SIZE
+            base_boxes[x, y, 1] = y / CELL_SIZE
+    base_boxes = np.reshape(base_boxes, [CELL_SIZE, CELL_SIZE, 1, 4])
+    base_boxes = np.tile(base_boxes, [1, 1, BOX_PER_CELL, 1])
+
+    # 将相对于每个 cell left-bottom 的坐标 (x, y), 转化为相对于图片的 left-bottom 的坐标
+    pred_bbox = tf.concat([pred_bbox[:, :, 2, 0:2]/CELL_SIZE, pred_bbox[:, :, 2, 2:]], axis=-1)
+    pred_bbox = pred_bbox + base_boxes
+
     corner_pred_bbox = center_size_bbox_to_corners_bbox(pred_bbox, axis=-1)
     iou = iou_per_image(corner_pred_bbox, gt_bbox)
 
