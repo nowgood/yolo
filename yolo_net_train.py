@@ -91,7 +91,6 @@ def main(_):
     yolo_loss = batch_loss(prediction, bbox, label, batch_size=1)
     print(yolo_loss.shape)
 
-    tf.summary.scalar('losses/yolo_loss', yolo_loss)
     res_loss = tf.losses.get_total_loss()
     total_loss = res_loss + yolo_loss
 
@@ -107,6 +106,7 @@ def main(_):
                           checkpoint_dir=PRETRAIN_DIR)
 
     tf.summary.merge_all()
+    writer = tf.summary.FileWriter(TRAIN_DIR, tf.get_default_graph())
 
     print("start training")
     final_loss = slim.learning.train(
@@ -117,7 +117,9 @@ def main(_):
         trace_every_n_steps=5000,
         log_every_n_steps=500,
         session_config=config,
-        save_interval_secs=60)
+        save_interval_secs=60, summary_writer=writer)
+
+    writer.close()
 
     print('Finished training. Last batch loss %f' % final_loss)
 
