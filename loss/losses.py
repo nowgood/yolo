@@ -66,7 +66,7 @@ def intersection(pred_boxes, gt_boxes, axis=-1):
         min_xmax = tf.minimum(x_max1, tf.transpose(x_max2))
         min_ymax = tf.minimum(y_max1, tf.transpose(y_max2))
 
-        return tf.concat([max_xmin, max_ymin, min_xmax, min_ymax], axis=axis)
+        return tf.stack([max_xmin, max_ymin, min_xmax, min_ymax], axis=axis)
 
 
 def iou_per_image(pred_bbox, gt_bbox):
@@ -91,11 +91,6 @@ def iou_per_image(pred_bbox, gt_bbox):
         # N 个areas1, M 个 areas2, 通过这种笛卡尔积的方式相加, 从而得到 N×M 的矩阵
         union_area = tf.expand_dims(areas1, -1) + tf.expand_dims(areas2, 0) - intersect_area + 1e-5
         iou = tf.truediv(intersect_area, union_area)
-
-        # 真实标签(gt_bbox_list, gt_class_list)的下标
-        # gt_list_index = tf.argmax(iou, axis=1)  # per box
-        # max_iou = tf.reduce_max(iou, axis=1)  # per box
-        # return gt_list_index, max_iou
 
         return iou
 
