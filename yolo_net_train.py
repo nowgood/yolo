@@ -87,6 +87,7 @@ def main(_):
                                                 min_after_dequeue=500)
     '''
     prediction = yolo_net.yolonet(image, is_training=True)
+    print(prediction.shape)
     yolo_loss = batch_loss(prediction, bbox, label, batch_size=1)
     print(yolo_loss.shape)
 

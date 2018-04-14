@@ -108,6 +108,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
     Returns: xx
     """
     center_gt_bbox = corners_bbox_to_center_bbox(gt_bbox)  # center_bbox
+    print(center_gt_bbox.shape)
     x_center = tf.floor(center_gt_bbox[:, 0] * CELL_SIZE)
     y_center = tf.floor(center_gt_bbox[:, 1] * CELL_SIZE)
 
