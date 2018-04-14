@@ -166,6 +166,7 @@ def per_image_loss(pred, gt_bbox, gt_class):
     no_object_pred_iou = np.zeros([CELL_SIZE, CELL_SIZE], dtype=np.int32)
     for i in range(CELL_SIZE):
         for j in range(CELL_SIZE):
+            print(pred_iou[i, j, responsible_box_index[i, j]])
             no_object_pred_iou[i, j] = pred_iou[i, j, responsible_box_index[i, j]]  # ?
     no_object_iou_loss += 0.5 * tf.square(no_object_pred_iou)
 
