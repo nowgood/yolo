@@ -47,7 +47,7 @@ def get_init_fn(checkpoint_dir, checkpoint_exclude_scopes=None):
 
 
 def main(_):
-
+    tf.logging.set_verbosity(tf.logging.INFO)
     tf_reader = tf.TFRecordReader()
     file_queue = tf.train.string_input_producer([FLAGS.tfrecord_path])
     _, image_raw = tf_reader.read(file_queue)
