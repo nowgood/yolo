@@ -69,7 +69,7 @@ def intersection(pred_boxes, gt_boxes, axis=-1):
         return tf.concat([max_xmin, max_ymin, min_xmax, min_ymax], axis=axis)
 
 
-def iou_per_image(pred_bbox, gt_bbox, scope=None):
+def iou_per_image(pred_bbox, gt_bbox):
     """Computes pairwise intersection-over-union between box collections.
 
       Args:
@@ -81,15 +81,15 @@ def iou_per_image(pred_bbox, gt_bbox, scope=None):
         two tensor with shape [N,] representing per box max iou scores
         and corresponding index(use to find gt_class)
     """
-    with tf.name_scope(scope, 'IOU'):
+    with tf.name_scope('IOU'):
         intersect = intersection(pred_bbox, gt_bbox)
-        print("intersect shape ", intersect)
+        print("intersect shape ", intersect.shape)
         intersect_area = area(intersect)
         areas1 = area(pred_bbox)
         areas2 = area(gt_bbox)
 
         # N 个areas1, M 个 areas2, 通过这种笛卡尔积的方式相加, 从而得到 N×M 的矩阵
-        union_area = tf.expand_dims(areas1, 1) + tf.expand_dims(areas2, 0) - intersect_area + 1e-5
+        union_area = tf.expand_dims(areas1, -1) + tf.expand_dims(areas2, 0) - intersect_area + 1e-5
         iou = tf.truediv(intersect_area, union_area)
 
         # 真实标签(gt_bbox_list, gt_class_list)的下标
