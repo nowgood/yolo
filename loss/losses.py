@@ -121,8 +121,8 @@ def per_image_loss(pred, gt_bbox, gt_class):
     # 将相对于每个 cell left-bottom 的坐标 (x, y), 转化为相对于图片的 left-bottom 的坐标
     for x in range(CELL_SIZE):
         for y in range(CELL_SIZE):
-            pred_bbox[x, y, 2, 0] = (pred_bbox[x, y, 2, 0] + x) / CELL_SIZE
-            pred_bbox[x, y, 2, 1] = (pred_bbox[x, y, 2, 1] + y) / CELL_SIZE
+            pred_bbox[x, y, :, 0] = (pred_bbox[x, y, :, 0] + x) / CELL_SIZE
+            pred_bbox[x, y, :, 1] = (pred_bbox[x, y, :, 1] + y) / CELL_SIZE
     corner_pred_bbox = center_size_bbox_to_corners_bbox(pred_bbox, axis=-1)
     iou = iou_per_image(corner_pred_bbox, gt_bbox)
 
