@@ -9,10 +9,10 @@ BOX_PER_CELL = 2
 
 def center_size_bbox_to_corners_bbox(bboxlist, axis=-1):
     x_center, y_center, width, height = tf.split(value=bboxlist, num_or_size_splits=4, axis=axis)
-    x_min = tf.maximum(0, x_center - 0.5 * width)
-    y_min = tf.maximum(0, x_center - 0.5 * height)
-    x_max = tf.maximum(0, x_center + 0.5 * width)
-    y_max = tf.maximum(0, x_center + 0.5 * height)
+    x_min = tf.maximum(0.0, x_center - 0.5 * width)
+    y_min = tf.maximum(0.0, x_center - 0.5 * height)
+    x_max = tf.maximum(0.0, x_center + 0.5 * width)
+    y_max = tf.maximum(0.0, x_center + 0.5 * height)
 
     return tf.concat([x_min, y_min, x_max, y_max], axis=axis)
 
