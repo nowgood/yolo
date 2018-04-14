@@ -135,9 +135,10 @@ def per_image_loss(pred, gt_bbox, gt_class):
     iou = iou_per_image(corner_pred_bbox, gt_bbox)
     print("iou shape", iou.shape)
 
-    class_loss = tf.Variable(0, tf.float32)
-    object_iou_loss = tf.Variable(0, tf.float32)
-    coord_loss = tf.Variable(0, tf.float32)
+    class_loss = tf.Variable(0, dtype=tf.float32)
+    object_iou_loss = tf.Variable(0, dtype=tf.float32)
+    coord_loss = tf.Variable(0, dtype=tf.float32)
+    
     mask = np.ones(shape=[CELL_SIZE, CELL_SIZE], dtype=np.float32)
 
     for idx in range(MAX_NUM_OBJECT):
@@ -194,4 +195,5 @@ def batch_loss(predictions, gt_boxes, gt_class, batch_size=1):
     tf.summary.scalar("losses/no_object_iou_loss", no_object_iou_loss)
     tf.summary.scalar("losses/yolo_loss", yolo_loss)
 
+    tf.assign_add()
     return yolo_loss
